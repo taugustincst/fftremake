@@ -229,7 +229,9 @@ The `?` button in battle opens a rules summary.
 index.html        screens and markup
 css/style.css     styling, including the small-screen layout
 js/audio.js       WebAudio synthesis: the combat sound table and the music sequencer
-js/data.js        jobs, abilities, passives, items, statuses, maps, campaign
+js/data.js        jobs, abilities, passives, items, statuses, training pools, errands
+js/maps.js        every battlefield: heights, terrain, deployment, mood
+js/story.js       the campaign's chapters and acts, the epilogue, the cities
 js/sprites.js     sprite compositing: body templates, equipment glyphs, lighting
 js/fx.js          battle effects: weapon swings, projectiles, elemental impacts, and what each sounds like
 js/unit.js        unit model, stats, equipment, leveling, JP
@@ -268,6 +270,8 @@ node tools/test-elements.js     # elemental affinities, absorption, prediction, 
 node tools/test-statuses.js     # Silence, Blind, Berserk and what answers them
 node tools/test-boss.js         # the final battle's second shape
 node tools/simulate.js 20 1 3   # 20 campaigns, 1 training battle per chapter, 3 retries
+npm run test:browser            # the Playwright suite in tests/browser (needs playwright-core and a Chromium)
+bash tests/browser/run.sh t-qol # one test, by name
 ```
 
 [tools/README.md](tools/README.md) describes each of them.

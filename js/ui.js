@@ -101,7 +101,7 @@ class BattleUI {
   // is the only thing that survives every breakpoint and orientation.
   measureInsets() {
     const cv = this.cv;
-    const scale = cv.width / Math.max(1, cv.clientWidth);
+    const scale = 1; // the board is laid out in CSS pixels; the backing store scales underneath
     const ins = { top: 0, bottom: 0, left: 0, right: 0 };
     const box = (el) => (el && el.offsetParent !== null && getComputedStyle(el).display !== 'none')
       ? el.getBoundingClientRect() : null;
@@ -255,7 +255,7 @@ class BattleUI {
     this.el.roster.innerHTML = `
       <div class="panel-title">Deploy <small>${placed}/${b.maxDeploy}</small></div>
       <div class="roster-list">${d.roster.map((u, i) => `
-        <div class="roster-row ${u === d.sel ? 'sel' : ''} ${u.x >= 0 ? 'placed' : ''}" data-i="${i}">
+        <div class="roster-row ${u === d.sel ? 'sel' : ''} ${u.x >= 0 ? 'placed' : ''}" data-i="${i}" tabindex="0" role="button">
           <canvas class="row-portrait" data-portrait="${i}"></canvas>
           <span class="name">${u.name}${u.leader ? ' ♛' : ''}</span>
           <span class="job">Lv${u.level} ${u.jobData.name}</span>
@@ -559,7 +559,7 @@ class BattleUI {
     const cv = this.cv;
     const pos = (e) => {
       const r = cv.getBoundingClientRect();
-      return { x: (e.clientX - r.left) * (cv.width / r.width), y: (e.clientY - r.top) * (cv.height / r.height) };
+      return { x: (e.clientX - r.left) * ((this.r.W || cv.width) / r.width), y: (e.clientY - r.top) * ((this.r.H || cv.height) / r.height) };
     };
     // Pointer events cover mouse, touch and pen with one code path.
     this.pointers = new Map();
@@ -615,7 +615,9 @@ class BattleUI {
     };
     cv.addEventListener('pointerup', release);
     cv.addEventListener('pointercancel', (e) => { this.pointers.delete(e.pointerId); this.drag = null; this.pinch = null; });
-    cv.addEventListener('pointerleave', () => { if (!this.drag) { this.hover = null; this.r.hl.cursor = null; this.refresh(); } });
+    // A touch pointer leaves the moment it lifts, which would clear the card of
+    // whatever was just tapped; only a mouse leaving clears the hover.
+    cv.addEventListener('pointerleave', (e) => { if (e.pointerType === 'mouse' && !this.drag) { this.hover = null; this.r.hl.cursor = null; this.refresh(); } });
 
     cv.addEventListener('contextmenu', (e) => { e.preventDefault(); this.cancel(); });
     cv.addEventListener('wheel', (e) => { e.preventDefault(); this.r.setZoom((this.r.zoom || 1) * (e.deltaY < 0 ? 1.1 : 0.9)); }, { passive: false });
@@ -623,7 +625,7 @@ class BattleUI {
     cv.style.touchAction = 'none';
 
     window.addEventListener('keydown', (e) => {
-      if (!this.battle || e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+      if (!this.battle || game.screen !== 'battle' || e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
       if (e.key === 'Escape') return this.cancel();
       const pan = 40, z = this.r.zoom || 1;
       if (e.key === 'ArrowLeft') { this.r.cam.x += pan / z; this.r.clampCamera(); }
@@ -657,6 +659,10 @@ class BattleUI {
 
   hoverAt(p) {
     const t = this.r.pickTile(p.x, p.y);
+    // The same tile as last time is nothing to redraw: the panels are rebuilt
+    // and the forecast re-simulated on every change, not every mouse event.
+    if (t && this.hover && t.x === this.hover.x && t.y === this.hover.y) return;
+    if (!t && !this.hover) return;
     this.hover = t;
     this.r.hl.cursor = t;
     this.renderTileInfo(t);
