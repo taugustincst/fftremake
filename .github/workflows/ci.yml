@@ -50,9 +50,17 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - uses: android-actions/setup-android@v3
-      - name: Install the SDK platform and build-tools this project targets
-        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+      # ubuntu-latest ships an SDK already, under $ANDROID_HOME; a setup
+      # action is not needed and android-actions/setup-android@v3 fails
+      # outright trying to install the "tools" package, which no longer
+      # exists in Google's repository at this compileSdk. Use the
+      # preinstalled sdkmanager directly instead.
+      - name: Accept licenses and install the SDK platform and build-tools this project targets
+        run: |
+          SDKMANAGER="$(find "$ANDROID_HOME" -name sdkmanager -type f | sort -V | tail -1)"
+          echo "SDKMANAGER=$SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses > /dev/null || true
+          "$SDKMANAGER" "platforms;android-36" "build-tools;36.0.0"
       - name: Build the debug APK
         working-directory: android
         run: |
