@@ -23,7 +23,7 @@ a browser, or serve the folder with any static file server.
   five across a reload. The team colour and the job's cloth never vary, because
   those are what a player has to read at a glance.
 - **Every blow has a voice.** Nine weapon swings and five impacts, so a knife
-  is heard as a knife and an axe as an axe, and six elements that sound as
+  is heard as a knife and an axe as an axe, and seven elements that sound as
   different as they look. A bowstring twangs, an arrow thuds, a thrown stone
   lands as a stone whatever the thrower is holding, and a spell is heard being
   gathered before it arrives. Twenty-eight sounds, all synthesised at runtime,
@@ -66,7 +66,7 @@ a browser, or serve the folder with any static file server.
   the drowned absorb and thunder they fear; the crown's Marshal, Inquisitor
   and Duelist; and at the top, the legendary
   Dragonlord, Hierophant and Fell Knight, whose arms the wagon sells only
-  late in the war — plus seventeen creatures with their own skillsets and
+  late in the war — plus nineteen creatures with their own skillsets and
   elemental identities (goblin, dire wolf, bomb, skeleton, marsh wisp,
   treant, clockwork sentinel, iron hound, steam colossus, rime wight, ice
   drake, the Nameless Cold, siren, reef crab, leviathan, the drowned, the
@@ -77,11 +77,11 @@ a browser, or serve the folder with any static file server.
 - **Cities on the map.** Ten towns along the road, each held by someone who
   should not have it: reavers, holdouts, the Concord's customs men, the
   Court. Fight one open and it stays open: a tavern that hires recruits
-  already trained in an advanced trade, and a market that sells twelve arms
-  the wagon never carries.
+  already trained in an advanced trade, and a market with two wares of its
+  own the wagon never carries — twenty arms across all ten towns.
 - **Errands.** Send a unit who is not the leader away from camp for a battle
   or two. They come back with gil, JP in the job they left in, and sometimes
-  something found. Ten errands, two on the board at a time.
+  something found. Fourteen errands, two on the board at a time.
 - **JP where you can see it**: the results roll-call shows what each unit
   earned and marks anyone with enough for something new; the camp and
   Formation lists carry the same mark.
@@ -90,12 +90,14 @@ a browser, or serve the folder with any static file server.
 - **JP progression.** Acting earns JP in your current job. Spend it on that
   job's abilities, equip any studied job's skillset as your secondary, and
   reach job levels to unlock the advanced classes.
-- **Twenty passive abilities** in three kinds: reaction (Counter, Parry,
-  Auto-Potion, Absorb MP, Regenerator, Vengeance), support (Attack Up, Magick
-  Up, Defend, Concentrate, Halve MP, Two Hands, Martial Arts, Equip Armor) and
-  movement (Move +1/+2, Jump +2, Sure Footing, Move-HP-Up, Treasure Hunter).
-  Learn them in one job, equip them in any.
-- **52 pieces of equipment** across weapon, offhand, head, body and accessory
+- **Forty-four passive abilities** in three kinds: reaction (Counter, Parry,
+  Auto-Potion, Absorb MP, Regenerator, Vengeance, and others learned further
+  up each tree), support (Attack Up, Magick Up, Defend, Concentrate, Halve
+  MP, Two Hands, Martial Arts, Equip Armor, and the elemental and job-bred
+  passives the later acts add) and movement (Move +1/+2, Jump +2, Sure
+  Footing, Move-HP-Up, Treasure Hunter, among them). Learn them in one job,
+  equip them in any.
+- **207 pieces of equipment** across weapon, offhand, head, body and accessory
   slots, gated by job equip classes. Gear drives weapon power and range,
   evasion and every stat. Ninja can dual wield; Two Hands trades the offhand
   for half again the weapon power.
@@ -166,7 +168,7 @@ a browser, or serve the folder with any static file server.
 - **Three difficulty settings** that shift the opposition rather than the party,
   so your own numbers always mean the same thing: enemy level, equipment tier
   and the size of the purse. Changeable at any time from camp.
-- **Six elements** — fire, ice, thunder, earth, holy and dark — that creatures
+- **Seven elements** — fire, ice, thunder, earth, water, holy and dark — that creatures
   and equipment answer. A bomb drinks fire and burns in ice, a dire wolf fears
   fire, a fell knight feeds on dark and dreads holy. Absorbed attacks heal the
   target, and the targeting preview tells you before you commit.
