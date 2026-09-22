@@ -9,10 +9,13 @@ a browser, or serve the folder with any static file server.
 
 ## Play it
 
-- **In a browser:** https://taugustincst.github.io/fftremake/ — the game as a
+- **In a browser:** https://taugustincst.github.io/is/ — the game as a
   progressive web app, installable from the browser menu and playable offline
-  once opened. Published from `main` by `.github/workflows/pages.yml`.
-- **On Android:** the [latest release](https://github.com/taugustincst/fftremake/releases/latest)
+  once opened. Published from `main` of the public `is` repository by
+  `.github/workflows/pages.yml` (GitHub Pages serves public repositories on
+  every plan; this private mirror carries the same workflow for when it is
+  needed here).
+- **On Android:** the [latest release](https://github.com/taugustincst/is/releases/latest)
   carries an `.apk` to sideload (signed with a debug key, so it installs on
   any phone; it is not the Google Play bundle, which needs the upload key
   described in `android/PLAY_STORE.md`). The same release carries the whole
