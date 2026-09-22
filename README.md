@@ -7,6 +7,24 @@ a browser, or serve the folder with any static file server.
 > Two princes claim one crown. Rowan Aldric, youngest son of a house that chose
 > the wrong side, rides north with the last of his companions.
 
+## Play it
+
+- **In a browser:** https://taugustincst.github.io/is/ — the game as a
+  progressive web app, installable from the browser menu and playable offline
+  once opened. Published from `main` by `.github/workflows/pages.yml`. The
+  site itself has to be switched on once, by hand, since a workflow's own
+  token may not create it: Settings → Pages → Source → **GitHub Actions**,
+  then re-run the Pages workflow from the Actions tab (or push to `main`).
+  GitHub Pages serves public repositories on every plan; the private
+  `fftremake` mirror carries the same workflow for when it is needed there.
+- **On Android:** the [latest release](https://github.com/taugustincst/is/releases/latest)
+  carries an `.apk` to sideload (signed with a debug key, so it installs on
+  any phone; it is not the Google Play bundle, which needs the upload key
+  described in `android/PLAY_STORE.md`). The same release carries the whole
+  game as a single `.html` file. Releases are cut by
+  `.github/workflows/release.yml`: run it from the Actions tab with a version
+  number, or push a tag such as `v1.6.0`.
+
 ## The game
 
 **Battle system**
