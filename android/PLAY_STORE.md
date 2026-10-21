@@ -81,7 +81,14 @@ complains about a version, the two pinned ones are the AGP version in
 ## 4. Create the app in the console
 
 Play Console → Create app → name `Chronicles of Elderon`, App, Free,
-default language English. Then, in the left-hand menu:
+default language English. (The app is free with an in-app purchase:
+create and activate the `full_unlock` product at $8.99 under Monetize →
+In-app products, and add testers under Settings → License testing so
+the closed test can exercise the unlock for free. Purchases must be
+acknowledged through the Play Developer API within 3 days or Play
+refunds them — a minimal acknowledgement endpoint is a launch step,
+recorded in js/billing.js's header.) Then, in the
+left-hand menu:
 
 1. **Set up your app** (the checklist under the Dashboard) — every item's
    answer is in `store/LISTING.md`: privacy policy URL, app access, ads,
