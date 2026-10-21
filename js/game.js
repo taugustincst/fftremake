@@ -14,7 +14,7 @@ const TIPS_KEY = 'elderon.tips';
 // a chat message, an email or a paste into a notes app.
 const CODE_TAG = 'ELDERON1.';
 // Shown in the credits; tools/regress.js keeps it equal to package.json's.
-const GAME_VERSION = '1.14.0';
+const GAME_VERSION = '1.15.0';
 // Where each chapter sits on the map of the realm, as fractions of the canvas.
 // Twelve stops: Act I runs east along the lower road, Act II turns back west
 // along the coast above it, so the two never cross on the parchment.
@@ -188,6 +188,17 @@ class Game {
     $('btn-coach-ok').onclick = () => this.ui.coachHide(false);
     $('btn-coach-skip').onclick = () => this.ui.coachHide(true);
     $('btn-battle').onclick = () => this.startNextChapter();
+    $('btn-unlock-open').onclick = () => this.openUnlock();
+    $('btn-unlock-buy').onclick = () => this.buyUnlock();
+    $('btn-unlock-restore').onclick = () => this.restoreUnlock();
+    $('btn-unlock-back').onclick = () => { if (this.state) this.showWorld(); else this.showScreen('title'); };
+    // The store's answers can land after the camp is drawn (Play is asked
+    // at launch, and again after a purchase): redraw the pieces that
+    // depend on them whenever they change.
+    if (window.Billing) Billing.onChange = () => {
+      this.syncUnlockCard();
+      if (this.screen === 'unlock') this.renderUnlock();
+    };
     $('btn-train').onclick = () => this.startTraining();
     $('btn-formation').onclick = () => this.openFormation();
     // A swipe across the unit page steps to the next unit (left) or the
@@ -837,6 +848,7 @@ class Game {
         <div class="chapter-map">${MAPS[ch.map].name} · ${tr('{n} enemies · up to Lv {lv}', { n: ch.enemies.length, lv: topLevel })}</div>
         <div class="chapter-goal">${tr('Objective: {goal}', { goal })}${o.protectLeader ? ` · ${tr('Rowan must not be lost')}` : ''}</div>
         ${ready ? `<div class="chapter-warn">${ready}</div>` : ''}
+        ${window.Billing && Billing.locksChapter(s.chapter) ? `<div class="chapter-warn">${tr('The demo ends at the Gates of Dunmarch. This road opens with the full game.')}</div>` : ''}
         ${s.chapter > 0 ? `<div class="chapter-map revisit-row"><label>${tr('Fight a won field again for half the pay:')} <select id="revisit-sel">${this.wonChapters().map(([i, c]) => `<option value="${i}">${i + 1}. ${c.title}</option>`).join('')}</select></label> <button id="btn-revisit" class="mini">${tr('Revisit')}</button></div>` : ''}`;
       if ($('btn-revisit')) $('btn-revisit').onclick = () => this.revisitChapter(+$('revisit-sel').value);
       $('btn-battle').disabled = false;
@@ -891,6 +903,7 @@ class Game {
     const hireLvl = Math.max(1, this.avgLevel() - 1);
     $('hire-info').textContent = `Hire a level ${hireLvl} recruit for 300 marks (party max ${PARTY_MAX}).`;
     $('btn-hire-squire').disabled = $('btn-hire-chemist').disabled = s.gil < 300 || s.party.length >= PARTY_MAX;
+    this.syncUnlockCard();
     this.showScreen('world');
     // Drawn once the screen is showing, so the canvas has a width to fit.
     this.drawWorldMap();
@@ -2194,6 +2207,14 @@ class Game {
     if (this.atFork()) return this.openChoice();
     const ch = this.chapterAt(this.state.chapter);
     if (!ch) return this.startTrial(resume);
+    // The Play edition's demo ends at the Gates of Dunmarch: the first
+    // five chapters are free, and the road beyond belongs to the unlocked
+    // game. Billing.locksChapter is true only where Play's store answers
+    // for this app (see js/billing.js) — on the open web there is no
+    // store, it is never true, and nothing here changes. A battle already
+    // begun and taken up again (resume) is never gated: it was started
+    // fairly, and it finishes.
+    if (!resume && window.Billing && Billing.locksChapter(this.state.chapter)) { this.openUnlock(); return; }
     if (!resume) await this.story(ch.title, ch.intro);
     // Experience and SP are earned even in a losing battle, so the run is
     // saved either way rather than letting a defeat quietly discard it.
@@ -2215,6 +2236,70 @@ class Game {
       this.saveGame();
       await this.story(ch.title, ch.outro);
     });
+  }
+
+  // ---- the unlock (Play edition) ---------------------------------------------------------
+  // The camp's Options card exists only while the store is present and the
+  // game is not yet owned; it is hidden everywhere else, so most players
+  // never see any of this.
+  syncUnlockCard() {
+    const card = $('unlock-card'); if (!card) return;
+    card.hidden = !(window.Billing && Billing.armed() && !Billing.owned());
+  }
+
+  openUnlock() { this._unlockMsg = ''; this.renderUnlock(); this.showScreen('unlock'); }
+
+  renderUnlock() {
+    if (!window.Billing) return;
+    const d = Billing.itemDetails();
+    if (d.title) $('unlock-title').textContent = d.title;
+    $('unlock-price').textContent = Billing.priceText();
+    const ownedNow = Billing.owned();
+    $('unlock-owned').hidden = !ownedNow;
+    $('unlock-buy-row').hidden = ownedNow;
+    $('unlock-msg').textContent = this._unlockMsg || (Billing.pending() && !ownedNow
+      ? tr('A purchase is waiting on Google Play to confirm it. When it clears, Restore Purchase will find it — and it is checked again on every launch.')
+      : '');
+    const busy = !!this._unlockBusy;
+    $('btn-unlock-buy').disabled = busy;
+    $('btn-unlock-restore').disabled = busy;
+    $('btn-unlock-buy').textContent = busy ? tr('Asking Google Play…') : tr('Unlock the full game — {price}', { price: Billing.priceText() });
+  }
+
+  async buyUnlock() {
+    if (this._unlockBusy || !window.Billing) return;
+    this._unlockBusy = true; this.renderUnlock();
+    const r = await Billing.buy();
+    this._unlockBusy = false;
+    if (r.status === 'owned') {
+      this._unlockMsg = '';
+      this.toast(tr('The full game is unlocked. The road is yours.'));
+      if (this.state) this.showWorld(); else this.showScreen('title');
+      return;
+    }
+    this._unlockMsg =
+      r.status === 'pending' ? tr('Google Play is still confirming the payment. Nothing is lost: the unlock arrives when it clears, and Restore Purchase below will find it.')
+      : r.status === 'cancelled' ? tr('The purchase was closed before it finished. Nothing was charged.')
+      : r.status === 'unavailable' ? tr('Google Play cannot be reached from here just now. The demo remains open; try again where the store answers.')
+      : tr('The purchase did not go through. Nothing was charged; Google Play said no more than that.');
+    this.renderUnlock();
+  }
+
+  async restoreUnlock() {
+    if (this._unlockBusy || !window.Billing) return;
+    this._unlockBusy = true; this.renderUnlock();
+    const has = await Billing.restore();
+    this._unlockBusy = false;
+    if (has) {
+      this._unlockMsg = '';
+      this.toast(tr('Purchase restored. The full game is unlocked.'));
+      if (this.state) this.showWorld(); else this.showScreen('title');
+      return;
+    }
+    this._unlockMsg = Billing.pending()
+      ? tr('Still waiting on Google Play to confirm the earlier payment. It is checked again on every launch.')
+      : tr('Google Play shows no purchase of the full game for this account. If you bought it under another account, restore from there.');
+    this.renderUnlock();
   }
 
   // ---- the five roads --------------------------------------------------------------------

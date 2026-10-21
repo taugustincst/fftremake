@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Elderon — Play Store simulation harness</title>
+<style>
+  body { font: 15px/1.55 system-ui, sans-serif; margin: 0; background: #14151f; color: #e8e6da; }
+  main { max-width: 1060px; margin: 0 auto; padding: 20px 16px 48px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  h2 { font-size: 16px; margin: 22px 0 6px; }
+  p, li { color: #c9c6b8; }
+  code { background: #23242f; padding: 1px 5px; border-radius: 3px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+  button { background: #2a2c3d; color: #e8e6da; border: 1px solid #4a4d66; border-radius: 6px; padding: 8px 12px; cursor: pointer; font-size: 14px; }
+  button:hover { border-color: #c9a227; }
+  button.sel { border-color: #c9a227; background: #3a3421; }
+  iframe { width: 100%; height: 720px; border: 1px solid #4a4d66; border-radius: 8px; background: #000; }
+  .note { border-left: 3px solid #c9a227; padding: 2px 0 2px 12px; margin: 12px 0; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Chronicles of Elderon — Play Store simulation harness</h1>
+  <p>This page proves the demo gate and the purchase flow without Google Play,
+  which does not exist for this app yet (no Play Console account, no product).
+  It loads the real game below and switches on the simulation built into
+  <code>js/billing.js</code>: a stand-in for the one boundary only Google can
+  provide — the Digital Goods service and the payment sheet. Everything on this
+  side of that boundary (detection, gate arming, persistence, purchase
+  bookkeeping) is the game's real code, the same code the Node suite checks:
+  <code>node tools/test-billing.js</code>.</p>
+
+  <p><b>Run it:</b> from the repository root,
+  <code>python3 -m http.server 8125</code>, then open
+  <code>http://localhost:8125/tools/store-sim.html</code>.</p>
+
+  <h2>1. Pick a store scenario</h2>
+  <div class="row" id="scenarios">
+    <button data-s="nostore">No store (the open web)</button>
+    <button data-s="unowned">Play · not bought</button>
+    <button data-s="owned">Play · already bought</button>
+    <button data-s="cancel">Play · player cancels at the till</button>
+    <button data-s="pending">Play · payment goes pending</button>
+    <button data-s="error">Play · store errors</button>
+  </div>
+
+  <h2>2. Jump to the demo boundary</h2>
+  <div class="row">
+    <button id="jump">Start a campaign standing at chapter 6 (the first locked chapter)</button>
+  </div>
+  <p>Then, in the game below, press <b>March to Battle</b>: with “not bought” the
+  unlock screen appears instead of the chapter; buying there opens the road, and
+  with “already bought” the chapter begins at once. <b>Camp → Options</b> shows the
+  unlock card while the game is unbought. In the “pending” scenario the purchase
+  waits on Play; switch the scenario to “already bought” and use
+  <b>Restore purchase</b> on the unlock screen to watch it land.</p>
+
+  <div class="note">
+    <p><b>What this cannot prove</b> (only a real Play Console listing can):
+    that Google's servers accept the purchase, that the payment sheet renders,
+    and the acknowledgement step — Play auto-refunds a purchase that is not
+    acknowledged through the Play Developer API within three days, which needs a
+    small backend and is listed as a launch step in
+    <code>android/PLAY_STORE.md</code>. The simulation also never engages in the
+    shipped game by itself: it answers only to this page's flags, and on the
+    open web the gate cannot arm in any case.</p>
+  </div>
+
+  <iframe id="game" src="../index.html" title="Chronicles of Elderon"></iframe>
+</main>
+<script>
+  const frame = document.getElementById('game');
+  const simKeys = ['elderon.store-sim', 'elderon.store-sim-owned', 'elderon.store-seen', 'elderon.unlock', 'elderon.unlock-pending'];
+  function setScenario(s) {
+    for (const k of simKeys) localStorage.removeItem(k);
+    if (s) localStorage.setItem('elderon.store-sim', s);
+    document.querySelectorAll('#scenarios button').forEach(b => b.classList.toggle('sel', b.dataset.s === s));
+    frame.src = '../index.html';
+  }
+  document.querySelectorAll('#scenarios button').forEach(b => b.onclick = () => setScenario(b.dataset.s));
+  document.getElementById('jump').onclick = () => {
+    const w = frame.contentWindow;
+    const g = w.game;
+    if (!g) { alert('The game has not finished loading yet.'); return; }
+    if (!g.state) g.newGame();
+    g.state.chapter = 5;               // five chapters won: the next is Ashen Ridge
+    g.saveGame();
+    g.showCampTab('road');
+    g.showWorld();
+    frame.focus();
+  };
+  setScenario('unowned');
+</script>
+</body>
+</html>

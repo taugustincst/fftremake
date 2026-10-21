@@ -128,6 +128,11 @@
         <h3><span data-i18n>Language</span> <small data-i18n>names, story and item text stay in English</small></h3>
         <div id="world-lang" class="tabs"></div>
       </div>
+      <div class="card unlock-card" data-camp-tab="options" id="unlock-card" hidden>
+        <h3><span data-i18n>The Full Game</span> <small data-i18n>the demo ends at the Gates of Dunmarch</small></h3>
+        <p data-i18n>The first five chapters are free. Everything beyond the gate — Thornwall Cathedral, the Brass Concord, the Winter Court, the Sunder Sea, the Crown, and the five roads' endings — opens with one unlock.</p>
+        <button id="btn-unlock-open" data-i18n>Unlock the full game</button>
+      </div>
     </div>
     <aside class="world-side">
       <div class="side-head">
@@ -200,6 +205,38 @@
     <div id="choice-text"></div>
     <div id="choice-list" class="choice-list"></div>
     <div class="story-buttons"><button id="btn-choice-back" data-i18n>Back to Camp</button></div>
+  </div>
+</section>
+
+<!-- ================= Unlock (Play edition) =================
+     Shown only where Google Play's store answers for this app: the demo
+     gate at the end of chapter five, and the camp's Options card. On the
+     open web this screen exists but nothing ever leads to it. -->
+<section id="screen-unlock" class="screen">
+  <div class="unlock-box">
+    <div class="unlock-kicker" data-i18n>The free demo ends at the Gates of Dunmarch</div>
+    <h2 id="unlock-title" data-i18n>The Road Goes On</h2>
+    <p data-i18n>You have marched the first five chapters: the ambush on the Verdant Road, the wolves of Millbrook, the Hollowmere ruins, the Sable Marsh, and the gates of Dunmarch themselves. Ser Brannoc has fled to Thornwall, and he fears what your father knew.</p>
+    <p data-i18n>The full game is the rest of the war:</p>
+    <ul class="unlock-list">
+      <li data-i18n>Nineteen more chapters — Thornwall Cathedral, the Foundry at Ironhold, the Frostholm Court, the Drowned City, and the capital itself</li>
+      <li data-i18n>All four acts after the first: the Brass Concord, the Winter Court, the Sunder Sea, and the Crown of Elderon</li>
+      <li data-i18n>The five roads out of the capital, each with an ending of its own, and the trials beyond the war</li>
+      <li data-i18n>Every job, city, forge and recruit the road holds — nothing else held back, no subscriptions, no advertisements</li>
+    </ul>
+    <div id="unlock-owned" class="unlock-owned" hidden>
+      <p data-i18n>The full game is unlocked on this account. The road is yours.</p>
+    </div>
+    <div id="unlock-buy-row">
+      <div class="unlock-price"><span id="unlock-price">$8.99</span> <small data-i18n>one-time purchase, through Google Play</small></div>
+      <p id="unlock-msg" class="unlock-msg" role="status" aria-live="polite"></p>
+      <div class="unlock-buttons">
+        <button id="btn-unlock-buy" class="primary" data-i18n>Unlock the full game</button>
+        <button id="btn-unlock-restore" data-i18n>Restore purchase</button>
+      </div>
+    </div>
+    <div class="story-buttons"><button id="btn-unlock-back" data-i18n>Back</button></div>
+    <p class="unlock-note" data-i18n>Your company, your saves and everything the demo earned carry over — the same campaign, with the gate open. The demo itself stays playable: camp, training, the shop, the cities you have opened, and every field you have won.</p>
   </div>
 </section>
 
@@ -344,5 +381,6 @@
 <script src="js/render.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/game.js"></script>
+<script src="js/billing.js"></script>
 </body>
 </html>
