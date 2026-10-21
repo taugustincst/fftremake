@@ -76,8 +76,11 @@ below is maintained by hand. Character limits are Play's.
     at any time.
 
     NO STRINGS
-    No ads. No accounts. No purchases. No internet permission at all: the
-    whole game is on your device and plays offline.
+    No ads. No accounts. No subscriptions, no premium currency, nothing
+    sold but the game itself: the first five chapters are a free demo,
+    and one purchase ($8.99) unlocks the whole campaign for good. The
+    game itself lives on your device and plays offline; the purchase is
+    handled by Google Play.
 
 **App category**: Game → Strategy
 **Tags**: Tactical RPG, Turn-based strategy, Single player, Offline
@@ -153,8 +156,11 @@ Play's 80 characters.
     Spielstand-Code trägt dein Spiel auf ein anderes Gerät.
 
     KEINE HAKEN
-    Keine Werbung. Keine Konten. Keine Käufe. Keine Internetberechtigung: das
-    ganze Spiel ist auf deinem Gerät und läuft offline.
+    Keine Werbung. Keine Konten. Keine Abos, keine Premiumwährung, nichts
+    wird verkauft außer dem Spiel selbst: Die ersten fünf Kapitel sind eine
+    kostenlose Demo, ein Kauf (8,99 $) schaltet die ganze Kampagne für immer
+    frei. Das Spiel selbst ist auf deinem Gerät und läuft offline; der Kauf
+    läuft über Google Play.
 
     Menüs, Hinweise und Schaltflächen auf Deutsch; Namen, Geschichte und
     Gegenstandstexte bleiben auf Englisch.
@@ -216,8 +222,11 @@ Play's 80 characters.
     Un code de sauvegarde emporte votre partie sur un autre appareil.
 
     SANS CONDITIONS
-    Pas de publicité. Pas de compte. Pas d’achat. Aucune permission Internet :
-    tout le jeu est sur votre appareil et se joue hors ligne.
+    Pas de publicité. Pas de compte. Pas d’abonnement, pas de monnaie
+    premium, rien n’est vendu sauf le jeu lui-même : les cinq premiers
+    chapitres sont une démo gratuite, un seul achat (8,99 $) débloque toute
+    la campagne pour de bon. Le jeu lui-même est sur votre appareil et se
+    joue hors ligne ; l’achat passe par Google Play.
 
     Menus, indications et boutons en français ; les noms, l’histoire et les
     textes des objets restent en anglais.
@@ -279,8 +288,11 @@ Play's 80 characters.
     momento. Un código de guardado lleva tu partida a otro dispositivo.
 
     SIN CONDICIONES
-    Sin anuncios. Sin cuentas. Sin compras. Sin permiso de Internet: todo el
-    juego está en tu dispositivo y funciona sin conexión.
+    Sin anuncios. Sin cuentas. Sin suscripciones, sin moneda prémium, no se
+    vende nada más que el propio juego: los primeros cinco capítulos son una
+    demo gratuita y una sola compra (8,99 $) desbloquea toda la campaña para
+    siempre. El juego en sí está en tu dispositivo y funciona sin conexión;
+    la compra la gestiona Google Play.
 
     Menús, indicaciones y botones en español; los nombres, la historia y los
     textos de los objetos siguen en inglés.
@@ -342,8 +354,11 @@ Play's 80 characters.
     código de save leva seu jogo para outro aparelho.
 
     SEM AMARRAS
-    Sem anúncios. Sem contas. Sem compras. Sem permissão de Internet: o jogo
-    inteiro está no seu aparelho e roda offline.
+    Sem anúncios. Sem contas. Sem assinaturas, sem moeda premium, nada é
+    vendido além do próprio jogo: os cinco primeiros capítulos são uma demo
+    gratuita, e uma única compra (US$ 8,99) desbloqueia toda a campanha para
+    sempre. O jogo em si fica no seu aparelho e roda offline; a compra é
+    feita pelo Google Play.
 
     Menus, dicas e botões em português; nomes, história e textos de itens
     continuam em inglês.
@@ -396,8 +411,10 @@ Play's 80 characters.
     難易度は3段階、いつでも変更可。セーブコードで別の端末へ引き継げます。
 
     しがらみなし
-    広告なし。アカウント不要。課金なし。インターネット権限も不要。ゲーム全体が
-    端末の中にあり、オフラインで遊べます。
+    広告なし。アカウント不要。サブスクリプションもプレミアム通貨もなし。
+    売るのはゲーム本体だけです：最初の5章は無料体験版、1回の購入（8.99ドル）
+    で全キャンペーンが永続的に解放されます。ゲーム本体は端末の中にあり、
+    オフラインで遊べます。購入はGoogle Playが処理します。
 
     メニュー・案内・ボタンは日本語。名前、物語、アイテムの説明は英語のままです。
 
@@ -421,16 +438,20 @@ tablets; the same two files satisfy both slots.
 
 **Ads**: No, this app does not contain ads.
 
-**App access**: All functionality is available without special access
-(no login, no restricted features).
+**App access**: Everything is available without an account or login.
+Content past the fifth chapter is behind the one-time in-app purchase
+described above — that is a purchase, not restricted access, and the
+demo needs nothing at all.
 
 **Content rating** (IARC questionnaire) — answers for the game category:
 - Violence: cartoon or fantasy violence against fantasy characters; no
   blood, no gore, no realistic depictions. Characters are defeated and
   "fall"; they can be revived.
 - Sexuality, nudity, profanity, drugs, alcohol, tobacco, gambling: none.
-- User interaction, sharing of location or personal information, digital
-  purchases: none.
+- User interaction, sharing of location or personal information: none.
+- Digital purchases: yes — one optional one-time in-app purchase
+  (full-game unlock, $8.99) after a free five-chapter demo; no premium
+  currency, no subscriptions.
 - Expected outcome: ESRB Everyone 10+ / PEGI 7 / USK 6 or similar.
 
 **Target audience and content**: choose age groups 13 and over only. The
@@ -442,8 +463,10 @@ the app into the Families policy with its own review. Do not tick
 - Does your app collect or share any of the required user data types? **No.**
 - Is all user data encrypted in transit? Not applicable (nothing is sent).
 - Do you provide a way for users to request deletion? Not applicable.
-The manifest requests no permissions, not even INTERNET, which is what the
-review will find when it checks.
+The game itself collects and transmits nothing; the manifest's INTERNET,
+ACCESS_NETWORK_STATE and com.android.vending.BILLING permissions exist
+solely because Google Play Billing requires them, which is what the review
+will find when it checks.
 
 **Government app**: No. **Financial features**: none. **Health**: no
 health features. **News**: not a news app.
