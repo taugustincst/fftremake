@@ -20,14 +20,16 @@
    seen, is remembered the same way — Play remains the source of truth and
    is re-asked on every launch that can reach it.
 
-   One thing the client cannot do: Play requires a purchase to be
+   One thing the client cannot do alone: Play requires a purchase to be
    acknowledged, and will refund and revoke one that is not acknowledged
    within three days. Acknowledgement is a Play Developer API call, which
-   needs the developer's credentials and so a small backend; the console
-   steps in android/PLAY_STORE.md carry it as a launch requirement. What
-   the client can do, it does: it asks Play what the player owns on every
-   launch (listPurchases), so a refund or revocation closes the gate again
-   and a completed pending payment opens it, with no state of its own to
+   needs the developer's credentials and so a small backend — that
+   endpoint now exists (see the acknowledgement section below), and what
+   the client can do, it does: it reports every purchase token to the
+   endpoint, queues any it could not confirm, retries the queue on every
+   launch, and asks Play what the player owns on every launch
+   (listPurchases), so a refund or revocation closes the gate again and
+   a completed pending payment opens it, with no state of its own to
    go stale.
    ========================================================================== */
 
@@ -155,12 +157,68 @@ const Billing = (() => {
     if (v) store.set(PENDING_KEY, '1'); else store.del(PENDING_KEY);
   }
 
+  // ---- acknowledgement --------------------------------------------------------
+  // Play refunds and revokes a purchase that is not acknowledged within
+  // three days. The acknowledgement itself is a Play Developer API call
+  // the client cannot make, so the game reports each purchase token to
+  // the small endpoint that can (elderon-acknowledge, Cloud Run). Tokens
+  // are queued in storage and retried on every launch until the endpoint
+  // confirms; the endpoint is idempotent, so reporting twice is harmless,
+  // and the three-day window makes retries safe. Nothing here may break
+  // the game: every failure is a shrug and a later retry.
+  const ACK_URL = 'https://elderon-acknowledge-132998034840.us-central1.run.app';
+  const PACKAGE_NAME = 'com.taugustincst.elderon';
+  const UNACKED_KEY = 'elderon.unacked';   // JSON object: { purchaseToken: productId }
+  function unacked() {
+    try { const q = JSON.parse(store.get(UNACKED_KEY) || '{}'); return q && typeof q === 'object' ? q : {}; }
+    catch (e) { return {}; }
+  }
+  function saveUnacked(q) { try { store.set(UNACKED_KEY, JSON.stringify(q)); } catch (e) { /* remembered for the session */ } }
+  async function ackNow(token, productId) {
+    if (typeof fetch !== 'function') return false;
+    try {
+      const r = await fetch(ACK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ packageName: PACKAGE_NAME, productId, purchaseToken: token }),
+      });
+      if (r && r.ok) {
+        const body = await r.json().catch(() => null);
+        if (body && (body.status === 'acknowledged' || body.status === 'already_acknowledged')) {
+          const q = unacked();
+          if (token in q) { delete q[token]; saveUnacked(q); }
+          return true;
+        }
+      }
+    } catch (e) { /* offline, or the endpoint is down — retried on a later launch */ }
+    return false;
+  }
+  function queueAck(token, productId) {
+    if (sim) return;   // simulated purchases are not Play's to acknowledge
+    if (!token || typeof token !== 'string' || (productId !== SKU && productId !== SKU_EXP)) return;
+    const q = unacked();
+    if (!(token in q)) { q[token] = productId; saveUnacked(q); }
+    void ackNow(token, productId);
+  }
+  // Report anything Play says the player owns, and retry the queue.
+  // Called whenever entitlement is refreshed, which includes every launch.
+  function reportPurchases(purchases) {
+    if (Array.isArray(purchases)) {
+      for (const p of purchases) {
+        if (p && p.purchaseToken) queueAck(p.purchaseToken, p.itemId);
+      }
+    }
+    const q = unacked();
+    for (const token of Object.keys(q)) void ackNow(token, q[token]);
+  }
+
   // Ask Play what this player owns. Entitlement lives there, not here:
   // this only mirrors the answer, so refunds and revocations are honoured
   // the next time the store can be asked.
   async function refreshEntitlement() {
     if (!service) return owned;
     const purchases = await service.listPurchases();
+    reportPurchases(purchases);
     const has = Array.isArray(purchases) && purchases.some(p => p && p.itemId === SKU);
     const hasExp = Array.isArray(purchases) && purchases.some(p => p && p.itemId === SKU_EXP);
     setOwned(has);
@@ -290,6 +348,9 @@ const Billing = (() => {
         token = response && response.details ? (response.details.purchaseToken || response.details.token) : null;
         try { await response.complete('success'); } catch (e) { /* the sheet is already closed */ }
       }
+      // Report the token for acknowledgement at once; if the endpoint
+      // cannot confirm right now, the queue retries it on later launches.
+      if (token) queueAck(token, exp ? SKU_EXP : SKU);
       // The payment sheet resolving is Play saying the purchase went
       // through; the entitlement list is the proof we keep. If it is not
       // there yet, the payment is pending with Play, not lost.
