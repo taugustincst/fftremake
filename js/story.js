@@ -1342,3 +1342,13 @@ const FIRST_BLOOD = {
   Wren: 'That is one for the Concord Star. There are a great many more to collect.',
   Ysolde: 'I never liked the song. I liked that even less. It is done.',
 };
+
+// The realm, as the camp's map draws it: one stop per common chapter, as
+// fractions of the map's width and height. The roads' spurs fan out from the last.
+const WORLD_ROUTE = [
+  [0.06, 0.93], [0.18, 0.83], [0.30, 0.93], [0.42, 0.83], [0.54, 0.93], [0.66, 0.83], [0.80, 0.92],
+  [0.92, 0.74], [0.78, 0.66], [0.62, 0.72], [0.46, 0.64], [0.30, 0.70],
+  [0.14, 0.58], [0.08, 0.44], [0.24, 0.38], [0.42, 0.44], [0.58, 0.36],
+  [0.72, 0.28], [0.86, 0.26], [0.92, 0.12], [0.76, 0.08], [0.56, 0.14],
+  [0.68, 0.44], [0.50, 0.50],
+];

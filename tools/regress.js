@@ -681,7 +681,9 @@ const mk = (n, job, lvl, opts = {}) => {
     const typeNames = g.run('TYPE_NAMES'), catNames = g.run('CATEGORY_NAMES');
     const untyped = Object.keys(g.ITEMS).filter(id => !typeNames[g.run(`itemType('${id}')`)] || !catNames[g.ITEMS[id].slot]);
     ok('every item shelves under a kind and a category the baggage knows', untyped.length === 0, untyped.join(',') || `${Object.keys(typeNames).length} kinds, ${Object.keys(catNames).length} categories`);
-    const cities = g.run('CITIES');
+    const baseCities = g.run('CITIES');
+    // Every campaign's cities, for the checks that follow; the Marches' towns are the Hollow Sky's.
+    const cities = g.run('typeof CAMPAIGNS === "undefined" ? CITIES : Object.values(CAMPAIGNS).flatMap(c => c.cities)');
     const badCity = cities.filter(c => !g.MAPS[c.map] || !c.enemies.length || !c.hires.every(j => g.JOBS[j] && g.JOBS[j].req !== null) || !c.stock.every(i => g.ITEMS[i] && g.ITEMS[i].city === c.id) || !(c.intro.length >= 2 && c.intro.length <= 4) || !(c.outro.length >= 1 && c.outro.length <= 3) || c.from < 0 || c.from > g.CAMPAIGN.length).map(c => c.id);
     ok('every city has a field, holders, trained trades to hire and a market of its own', cities.length >= 6 && badCity.length === 0 && new Set(cities.map(c => c.id)).size === cities.length, badCity.join(',') || `${cities.length} cities`);
     const gameSrc = fs.readFileSync(path.join(ROOT, 'js', 'game.js'), 'utf8');
@@ -701,7 +703,7 @@ const mk = (n, job, lvl, opts = {}) => {
     const sink = Object.keys(g.ITEMS).filter(id => g.upgradeable(id) && g.ITEMS[id].tier >= 6 && !g.ITEMS[id].forge).map(id => g.forgeCost(`${id}+3`).gil + g.forgeCost(`${id}+4`).gil);
     ok('taking a late piece from +3 to +5 costs several thousand marks', sink.length > 10 && Math.min(...sink) >= 7000, `from ${Math.min(...sink)} marks`);
     const forgedLegends = Object.entries(g.FORGE_ITEMS).filter(([, it]) => it.late && (it.cost.starHeart || it.cost.tidePearl));
-    ok('seven legendary arms are forged in the last cities, each for a star heart or tide pearls, none under eight thousand', forgedLegends.length === 7 && forgedLegends.every(([, it]) => (it.cost.starHeart || it.cost.tidePearl) && it.price >= 8000 && it.tier >= 7 && cities.find(c => c.id === it.forge && c.from >= 17)), forgedLegends.map(([id]) => id).join(','));
+    ok('seven legendary arms are forged in the last cities, each for a star heart or tide pearls, none under eight thousand', forgedLegends.filter(([, it]) => baseCities.some(c => c.id === it.forge)).length === 7 && forgedLegends.every(([, it]) => (it.cost.starHeart || it.cost.tidePearl) && it.price >= 8000 && it.tier >= 7 && cities.find(c => c.id === it.forge && (c.from >= 17 || !baseCities.includes(c)))), forgedLegends.map(([id]) => id).join(','));
     let early = 0, late = 0, lateRare = 0;
     for (let i = 0; i < 2000; i++) { const d = g.fieldMaterials(7, i % 2 === 0, Math.random, 12); if (d.tidePearl || d.starHeart) early++; }
     for (let i = 0; i < 2000; i++) { const d = g.fieldMaterials(7, i % 2 === 0, Math.random, 22); late++; if (d.tidePearl || d.starHeart) lateRare++; }

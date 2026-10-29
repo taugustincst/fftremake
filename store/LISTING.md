@@ -37,6 +37,14 @@ below is maintained by hand. Character limits are Play's.
     cannot be dodged and lands a quarter harder. Climb, jump, and turn the
     field to see what a wall is hiding.
 
+    THE HOLLOW SKY
+    A second campaign, sold as its own in-app purchase: a year after the
+    war the bell rings, and east over the Greywall a Choir is singing the
+    sky down. Sixteen chapters in four acts, three endings, four new
+    trades, five new towns, and a battle against your own reflection.
+    Begin it from the title with a veteran company, or carry a finished
+    game east with everything it has.
+
     THIRTY-FIVE JOBS
     Footmen become knights, archers, monks, thieves, mages, ninja and
     dragoons; then samurai, summoners, geomancers and bards; then paladins,

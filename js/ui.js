@@ -605,7 +605,7 @@ class BattleUI {
     this.r.hl.area.clear();
     if (!tile || !t.targets.some(x => x.x === tile.x && x.y === tile.y)) { this.el.pred.innerHTML = ''; return; }
     const ab = t.ability, u = t.unit;
-    for (const a of this.battle.grid.areaTiles(tile.x, tile.y, ab.aoe)) this.r.hl.area.add(`${a.x},${a.y}`);
+    for (const a of this.battle.grid.areaTiles(tile.x, tile.y, this.battle.aoeOf(this.turn && this.turn.unit, ab))) this.r.hl.area.add(`${a.x},${a.y}`);
     const preds = this.battle.predict(u, ab, tile.x, tile.y);
     if (!preds.length) { this.el.pred.innerHTML = '<div class="pred-none">No target in area.</div>'; return; }
     this.el.pred.innerHTML = preds.map(p => {

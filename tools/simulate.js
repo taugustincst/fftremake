@@ -9,14 +9,22 @@
    The report gives both the first-attempt win rate and how often the campaign
    is finished at all.
 
-   Usage: node tools/simulate.js [runs] [trainingBattlesPerChapter] [retries]
-   Example: node tools/simulate.js 20 1 3 */
+   Usage: node tools/simulate.js [runs] [trainingBattlesPerChapter] [retries] [campaign]
+   Example: node tools/simulate.js 20 1 3
+            node tools/simulate.js 6 1 3 hollowsky   (the expansion, with its veteran company) */
 const { load } = require('./load');
 const g = load();
 
 const RUNS = Number(process.argv[2]) || 10;
 const TRAININGS = process.argv[3] === undefined ? 1 : Number(process.argv[3]);
 const RETRIES = process.argv[4] === undefined ? 3 : Number(process.argv[4]);
+const CAMPAIGNS = g.run('typeof CAMPAIGNS === "undefined" ? null : CAMPAIGNS');
+const CAM = (CAMPAIGNS && CAMPAIGNS[process.argv[5] || 'base']) || { id: 'base', chapters: g.CAMPAIGN, roads: g.run('ROADS'), roadOrder: g.run('ROAD_ORDER'), training: g.TRAINING_POOL, refusers: { iron: g.run('IRON_REFUSERS') } };
+// The glass remembers: Mirrorwater's foes are the company's own first five.
+function mirrorEnemies(ch, party) {
+  const roster = party.filter(u => !u.pet).slice(0, 5), spots = ch.enemies;
+  return roster.map((u, i) => ({ job: u.job, level: u.level, x: spots[i % spots.length].x, y: spots[i % spots.length].y, name: `Mirror ${u.name}`, gear: Object.assign({}, u.gear), passives: Object.values(u.passives).filter(Boolean) }));
+}
 // A chapter averaging more rounds than this (a round: everyone has acted
 // once) is a chase, not a fight, and the run fails.
 const ROUND_CAP = 10;
@@ -38,7 +46,7 @@ function spendJp(u) {
 }
 
 function shop(party, state, chapter) {
-  const tier = Math.min(6, chapter + 1);
+  const tier = CAM.shopTier || Math.min(6, chapter + 1);
   // Buy by slot across the whole party, the way a player spreads a purse.
   for (const slot of ['weapon', 'body', 'head', 'offhand', 'acc']) {
     for (const u of party) {
@@ -50,6 +58,7 @@ function shop(party, state, chapter) {
       for (const id of Object.keys(g.ITEMS)) {
         const it = g.ITEMS[id];
         if (it.tier > tier || it.price > state.gil || it.base || it.forge || it.slot === 'material') continue;
+        if (it.city || (it.from !== undefined && (CAM.id !== 'hollowsky' || chapter < it.from))) continue;
         if (!g.canEquipInSlot(u.job, id, slot, g.passiveEquipBonus(u))) continue;
         if (slot === 'offhand' && u.hasPassive('twoHands')) continue;
         const gain = g.gearScore(u.job, id) - curScore;
@@ -85,41 +94,55 @@ async function fight(party, spec, state) {
 // A training battle roughly matching what the game generates.
 function trainingSpec(party, chapterIndex) {
   const lvl = Math.max(1, Math.round(party.reduce((a, u) => a + u.level, 0) / party.length));
-  const pool = g.TRAINING_POOL[Math.min(g.TRAINING_POOL.length - 1, chapterIndex)];
-  const map = g.MAPS.verdant;
+  const pools = CAM.training || g.TRAINING_POOL;
+  const pool = pools[Math.min(pools.length - 1, chapterIndex)];
+  const map = CAM.id === 'hollowsky' ? g.MAPS.bellroad : g.MAPS.verdant;
   const spots = [];
   for (let y = 0; y < map.h; y++) for (let x = 0; x < map.w; x++) {
-    if ('wtx'.includes(map.terrain[y][x])) continue;
+    if ('wtxp'.includes(map.terrain[y][x])) continue;
     const d = Math.min(...map.deploy.map(p => Math.abs(p[0] - x) + Math.abs(p[1] - y)));
     if (d >= 6) spots.push({ x, y });
   }
   return {
-    map: 'verdant', gil: 300 + lvl * 70, objective: { type: 'rout' },
+    map: CAM.id === 'hollowsky' ? 'bellroad' : 'verdant', gil: 300 + lvl * 70, objective: { type: 'rout' },
     enemies: pool.map((job, i) => ({ job, level: lvl, x: spots[i].x, y: spots[i].y })),
   };
 }
 
 // Each run walks the common road and then one of the five roads out of the
 // capital, taken in turn, so every ending is played over a batch of runs.
-const ROADS = g.run('ROADS'), ROAD_ORDER = g.run('ROAD_ORDER');
+const ROADS = CAM.roads, ROAD_ORDER = CAM.roadOrder, COMMON = CAM.chapters;
 function roadFor(run) {
   const id = ROAD_ORDER[run % ROAD_ORDER.length];
-  return [...g.CAMPAIGN, ...ROADS[id].chapters.map(ch => Object.assign({}, ch, { id: `${id}:${ch.id}`, road: id }))];
+  return [...COMMON, ...ROADS[id].chapters.map(ch => Object.assign({}, ch, { id: `${id}:${ch.id}`, road: id }))];
+}
+// The company a campaign begins with: the four of the first road, or the
+// Hollow Sky's thirteen veterans, geared and learned as the title gives them.
+function startingParty() {
+  if (!CAM.party) return g.STARTING_PARTY.map(p => new g.Unit(Object.assign({ team: 'player' }, p)));
+  return CAM.party.map(p => {
+    const u = new g.Unit(Object.assign({ team: 'player' }, p));
+    u.autoLearn(0.75); u.jp[u.job] = 400; u.jpTotal[u.job] = 1000;
+    const kit = g.bestGearFor(u.job, null, 6); u.gear = {}; for (const [slot, id] of Object.entries(kit)) if (id) u.gear[slot] = id;
+    u.resetBattleState(); return u;
+  });
 }
 async function runCampaign(run) {
-  const state = { gil: 500 };
-  const party = g.STARTING_PARTY.map(p => new g.Unit(Object.assign({ team: 'player' }, p)));
+  const state = { gil: CAM.gil || 500 };
+  const party = startingParty();
   const results = [];
   const road = roadFor(run);
   for (let ci = 0; ci < road.length; ci++) {
     const ch = road[ci];
-    // Those who refuse the Iron Crown leave before its first fight.
-    if (ch.road === 'iron' && ci === g.CAMPAIGN.length) for (const n of g.run('IRON_REFUSERS')) { const k = party.findIndex(u => u.name === n); if (k >= 0) party.splice(k, 1); }
+    // Those who refuse a road leave before its first fight.
+    if (ch.road && ci === COMMON.length) for (const n of (CAM.refusers || {})[ch.road] || []) { const k = party.findIndex(u => u.name === n); if (k >= 0) party.splice(k, 1); }
     for (let t = 0; t < TRAININGS; t++) await fight(party, trainingSpec(party, ci), state);
     for (const u of party) spendJp(u);
     shop(party, state, ci);
-    advanceJobs(party);
-    let r = await fight(party, ch, state);
+    // Veterans keep the trades they came with.
+    if (!CAM.party) advanceJobs(party);
+    const spec = ch.mirror ? Object.assign({}, ch, { enemies: mirrorEnemies(ch, party) }) : ch;
+    let r = await fight(party, spec, state);
     const first = r.res;
     let attempts = 1;
     // A defeat is not the end of a run: train, re-equip and go again.
@@ -128,8 +151,8 @@ async function runCampaign(run) {
       await fight(party, trainingSpec(party, ci), state);
       for (const u of party) spendJp(u);
       shop(party, state, ci);
-      advanceJobs(party);
-      r = await fight(party, ch, state);
+      if (!CAM.party) advanceJobs(party);
+      r = await fight(party, spec, state);
     }
     results.push({
       ch: ch.id, res: r.res, first, attempts, turns: r.turns, rounds: r.rounds, gil: state.gil,
@@ -156,7 +179,7 @@ async function runCampaign(run) {
   }
   console.log(`${RUNS} runs, ${TRAININGS} training battle(s) per chapter, up to ${RETRIES} retries\n`);
   console.log('chapter        reached   1st try   cleared   tries   turns   rounds  party Lv   marks left');
-  const rows = [...g.CAMPAIGN, ...ROAD_ORDER.flatMap(id => ROADS[id].chapters.map(ch => ({ id: `${id}:${ch.id}` })))];
+  const rows = [...COMMON, ...ROAD_ORDER.flatMap(id => ROADS[id].chapters.map(ch => ({ id: `${id}:${ch.id}` })))];
   for (const ch of rows) {
     const t = tally[ch.id];
     if (!t) { console.log(`${ch.id.padEnd(15)}never reached`); continue; }

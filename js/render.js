@@ -24,6 +24,8 @@ const TERRAIN = {
   b: { top: '#b08a52', l: '#8f6d40', r: '#6e5330' },
   w: { top: '#3f6fb0', l: '#365f98', r: '#2c4f80' },
   t: { top: '#5f9e4a', l: '#7a5a3c', r: '#5e4430', lip: '#4a7d3a' },
+  // A pillar: dressed stone with a column standing on it, for halls and towers.
+  p: { top: '#8e8e9c', l: '#7a7a88', r: '#606070' },
   // The north: packed snow over frozen earth, and river ice over dark water.
   n: { top: '#e4ecf2', l: '#8a8a94', r: '#6c6c78', lip: '#c8d4dc' },
   i: { top: '#b6dcee', l: '#2c4f80', r: '#243f68', lip: '#9cc8e0' },
@@ -67,7 +69,7 @@ function tileTexture(kind, variant) {
   } else if (kind === 'd') {
     for (let i = 0; i < 22; i++) { const [x, y] = inside(); px(x, y, 1, 1, rnd() < 0.5 ? 'rgba(255,240,200,0.14)' : 'rgba(60,30,10,0.16)'); }
     for (let i = 0; i < 4; i++) { const [x, y] = inside(); px(x, y, 3, 2, '#8a6a48'); px(x, y, 2, 1, '#c9a67a'); }
-  } else if (kind === 's') {
+  } else if (kind === 's' || kind === 'p') {
     // Flagstones: a couple of cracks along the isometric axes, and chips.
     for (let i = 0; i < 3; i++) {
       const [x, y] = inside(); const len = 4 + rnd() * 8, dir = rnd() < 0.5 ? 1 : -1;
@@ -205,6 +207,28 @@ function treeSprite(variant) {
   return cv;
 }
 
+// A column of dressed stone, drawn once per variant like a tree: a plinth,
+// courses with their shaded side, and a capital.
+const pillarCache = new Map();
+function pillarSprite(variant) {
+  let cv = pillarCache.get(variant);
+  if (cv) return cv;
+  cv = document.createElement('canvas'); cv.width = 48; cv.height = 64;
+  const c = cv.getContext('2d');
+  const rnd = seeded(211 + variant * 17);
+  const bx = 24, by = 60, w = 12 + Math.round(rnd() * 2);
+  c.fillStyle = '#6c6c7a'; c.fillRect(bx - w / 2 - 3, by - 6, w + 6, 6);           // plinth
+  c.fillStyle = '#9a9aa8'; c.fillRect(bx - w / 2, by - 50, w, 44);                  // shaft
+  c.fillStyle = '#7a7a88'; c.fillRect(bx + w / 2 - 4, by - 50, 4, 44);              // its shaded side
+  c.fillStyle = '#b4b4c2'; c.fillRect(bx - w / 2, by - 50, 2, 44);                  // its lit edge
+  for (let y = by - 44; y < by - 8; y += 8) { c.fillStyle = 'rgba(0,0,0,0.18)'; c.fillRect(bx - w / 2, y, w, 1); } // courses
+  c.fillStyle = '#a8a8b6'; c.fillRect(bx - w / 2 - 3, by - 56, w + 6, 6);          // capital
+  c.fillStyle = '#c4c4d0'; c.fillRect(bx - w / 2 - 3, by - 56, w + 6, 2);
+  if (rnd() < 0.5) { c.fillStyle = 'rgba(0,0,0,0.25)'; c.fillRect(bx - 2 + Math.round(rnd() * 6) - 3, by - 30 + Math.round(rnd() * 14), 2, 6); } // a chip
+  pillarCache.set(variant, cv);
+  return cv;
+}
+
 /* Every field has a mood: the sky behind it, the light on it, what drifts
    through the air, and which theme plays. A marsh at dusk and a cathedral
    at night should not feel like the same green board under different
@@ -230,6 +254,12 @@ const MOODS = {
   // throne room.
   dawn:  { sky: ['#5a3a3a', '#d8a060'], stars: false, tint: 'rgba(255,200,120,0.14)', air: 'motes',    music: 'crown' },
   court: { sky: ['#1a1030', '#3a2a50'], stars: false, tint: 'rgba(220,180,80,0.12)',  air: null,       music: 'crown' },
+  // The Hollow Sky: ash over the bell road, the lamplit Marches, the white
+  // glare of the glass desert, and the aurora come down to the tower.
+  ash:    { sky: ['#2a2630', '#15121a'], stars: false, tint: 'rgba(160,150,170,0.14)', air: 'embers',   music: 'choir' },
+  lantern:{ sky: ['#1a1220', '#3a2418'], stars: true,  tint: 'rgba(255,170,70,0.16)',  air: 'motes',    music: 'choir' },
+  glass:  { sky: ['#c8d8e8', '#eaf2ff'], stars: false, tint: 'rgba(200,230,255,0.12)', air: 'mist',     music: 'glass' },
+  hollow: { sky: ['#0a0616', '#2a1848'], stars: true,  tint: 'rgba(150,100,255,0.14)', air: 'motes',    music: 'hollow', aurora: true },
 };
 
 /* The sky: a gradient, a scatter of stars that keeps its place when the
@@ -977,20 +1007,20 @@ class Renderer {
 
   // A tree stands over its tile, and over anything behind it.
   drawTileTree(t) {
-    if (t.t !== 't') return;
+    if (t.t !== 't' && t.t !== 'p') return;
     const c = this.ctx;
     const { sx, sy } = this.toScreen(t.x, t.y, t.h);
     c.fillStyle = 'rgba(0,0,0,0.30)';
     c.beginPath(); c.ellipse(sx, sy + 3, 18, 7, 0, 0, Math.PI * 2); c.fill();
-    // Drawn half again its size, so a tree stands over a figure as it should.
-    c.drawImage(treeSprite(tileVariant(t.x, t.y)), sx - 34, sy - 84, 68, 90);
+    // Drawn half again its size, so a tree (or a column) stands over a figure as it should.
+    c.drawImage(t.t === 'p' ? pillarSprite(tileVariant(t.x, t.y)) : treeSprite(tileVariant(t.x, t.y)), sx - 34, sy - 84, 68, 90);
   }
 
   /* The screen box a tile paints into: its top, its walls below, and its
      tree above, in world units. */
   tileBox(t) {
     const { sx, sy } = this.toScreen(t.x, t.y, t.h);
-    return { x0: sx - 34, x1: sx + 34, y0: sy - (t.t === 't' ? 84 : 17), y1: sy + 17 + t.h * HZ };
+    return { x0: sx - 34, x1: sx + 34, y0: sy - (t.t === 't' || t.t === 'p' ? 84 : 17), y1: sy + 17 + t.h * HZ };
   }
 
   /* The board, drawn once. Every tile's static part, in depth order, into a
@@ -1053,7 +1083,7 @@ class Renderer {
     const { sx, sy } = this.toScreen(t.x, t.y, t.h);
     const wh = t.h * HZ;
     c.moveTo(sx, sy - 16); c.lineTo(sx + 32, sy); c.lineTo(sx + 32, sy + wh); c.lineTo(sx, sy + 16 + wh); c.lineTo(sx - 32, sy + wh); c.lineTo(sx - 32, sy); c.closePath();
-    if (t.t === 't') c.rect(sx - 34, sy - 84, 68, 90);
+    if (t.t === 't' || t.t === 'p') c.rect(sx - 34, sy - 84, 68, 90);
   }
 
   /* After something is drawn over the cached board, the tiles standing in

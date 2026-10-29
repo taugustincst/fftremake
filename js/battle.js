@@ -346,8 +346,12 @@ class Battle {
     return this.grid.targetTiles(fromX, fromY, this.abilityRange(unit, ab), this.abilityVert(unit, ab), !!ab.allowSelf);
   }
 
+  // How wide an ability lands for this user: a Cantor's Choir Voice carries
+  // anything sung over an area one tile further.
+  aoeOf(unit, ab) { return ab.aoe + (ab.aoe > 0 && unit && unit.hasPassive && unit.hasPassive('choirVoice') ? 1 : 0); }
+
   affectedUnits(unit, ab, tx, ty) {
-    const tiles = this.grid.areaTiles(tx, ty, ab.aoe);
+    const tiles = this.grid.areaTiles(tx, ty, this.aoeOf(unit, ab));
     const out = [];
     for (const t of tiles) {
       for (const u of this.units) {
@@ -413,6 +417,7 @@ class Battle {
         if (user.hasPassive('firstStrike') && target.hp === target.maxHp) base *= 1.5;
         if (user.hasPassive('monsterHunter') && target.jobData && target.jobData.kind === 'monster') base *= 1.5;
         if (user.hasPassive('singleCombat') && this.units.filter(u => u.alive && this.onField(u) && u.team !== user.team && Grid.dist(u.x, u.y, user.x, user.y) === 1).length === 1) base *= 4 / 3;
+        if (user.hasPassive('highGround') && this.grid.height(user.x, user.y) > this.grid.height(target.x, target.y)) base *= 4 / 3;
         if (user.hasStatus('berserk')) base *= 1.5;
         if (target.hasPassive('defend')) base *= 0.8;
         if (target.hasStatus('protect')) base *= 2 / 3;
@@ -503,6 +508,13 @@ class Battle {
           this.log(`${t.name} evades ${user.name}'s ${ab.name}!`, 'miss');
           if (this.hooks.onEvade) this.hooks.onEvade(t);
           if (this.hooks.showFloat) this.hooks.showFloat(t, 'Miss', '#ddd');
+          continue;
+        }
+        // Glass Skin: a quarter of magick aimed at the wearer shatters on it.
+        if (ab.kind === 'magic' && t.team !== user.team && t.hasPassive('glassSkin') && Math.random() < 0.25) {
+          this.log(`${user.name}'s ${ab.name} shatters on ${t.name}'s glass!`, 'miss');
+          if (this.hooks.onEvade) this.hooks.onEvade(t);
+          if (this.hooks.showFloat) this.hooks.showFloat(t, 'Shatter', '#cfe8ff');
           continue;
         }
         // Parry turns a physical blow aside outright.
@@ -616,6 +628,7 @@ class Battle {
         if (!t.alive) return false;
         let v = this.computeEffect(user, ab, eff, t);
         if (user.hasPassive('fieldRepair')) v = Math.ceil(v * 1.3);
+        if (user.hasPassive('lampLight')) v = Math.ceil(v * 1.2);
         const real = Math.min(v, t.maxHp - t.hp);
         t.hp += real;
         this.log(`${t.name} recovers ${real} HP.`, 'heal');

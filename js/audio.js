@@ -139,6 +139,39 @@ const TRACKS = {
       { wave: 'triangle', gain: 0.13, notes: seq('45 - - - - - - - | 41 - - - 40 - - - | 38 - - - - - - -') },
     ],
   },
+  // The Hollow Sky. The Choir: a chant on four notes, over and over, with a
+  // fifth that will not resolve, and a drum like a slow procession.
+  choir: {
+    bpm: 96, gain: 1, drums: 'k...k...k...k.t.',
+    voices: [
+      { wave: 'triangle', gain: 0.13, vib: true, notes: seq('57 - 60 - 64 - 62 - | 57 - 60 - 64 - 65 - | 57 - 60 - 64 - 62 - | 60 - 59 - 57 - - -') },
+      { wave: 'sine', gain: 0.08, notes: seq('52 - 55 - 60 - 59 - | 52 - 55 - 60 - 62 - | 52 - 55 - 60 - 59 - | 55 - 55 - 52 - - -') },
+      { wave: 'sine', gain: 0.06, vib: true, notes: seq('69 - - - - - - - | 69 - - - - - 70 - | 69 - - - - - - - | 67 - - - 64 - - -') },
+      { wave: 'triangle', gain: 0.15, notes: seq('45 . . . 45 . . . | 41 . . . 41 . . . | 45 . . . 45 . . . | 43 . . . 45 . . .') },
+    ],
+  },
+  // The glass: bright, high and still, a music box in a mirror, every line
+  // answered by itself a bar later and a fifth up.
+  glass: {
+    bpm: 112, gain: 1,
+    voices: [
+      { wave: 'sine', gain: 0.12, notes: seq('81 . 84 . 88 . 84 . | 81 . 84 . 88 . 91 . | 79 . 83 . 86 . 83 . | 79 . 83 . 86 . 88 .') },
+      { wave: 'sine', gain: 0.08, notes: seq('. . . . . . . . | 76 . 79 . 83 . 79 . | 76 . 79 . 83 . 86 . | 74 . 78 . 81 . 78 .') },
+      { wave: 'triangle', gain: 0.07, notes: seq('69 - - - 72 - - - | 69 - - - 72 - - - | 67 - - - 71 - - - | 67 - - - 71 - - -') },
+      { wave: 'triangle', gain: 0.12, notes: seq('45 - - - - - - - | 45 - - - - - - - | 43 - - - - - - - | 43 - - - - - - -') },
+    ],
+  },
+  // The tower: the Choir's chant slowed and sunk under the aurora, the fifth
+  // note held, and something very low answering a bar behind.
+  hollow: {
+    bpm: 72, gain: 1, drums: 't.......t...t...',
+    voices: [
+      { wave: 'triangle', gain: 0.14, vib: true, notes: seq('57 - - - 60 - - - | 64 - - - 65 - - - | 64 - - - 62 - - - | 57 - - - - - - -') },
+      { wave: 'sine', gain: 0.07, notes: seq('. . . . 45 - - - | 48 - - - 52 - - - | 53 - - - 52 - - - | 50 - - - 45 - - -') },
+      { wave: 'sawtooth', gain: 0.03, vib: true, notes: seq('69 - - - - - - - | 70 - - - - - - - | 69 - - - - - - - | 67 - - - 65 - - -') },
+      { wave: 'triangle', gain: 0.16, notes: seq('33 - - - - - - - | 29 - - - - - - - | 33 - - - - - - - | 31 - - - 33 - - -') },
+    ],
+  },
 };
 
 /* ==========================================================================
@@ -632,7 +665,7 @@ class GameAudio {
 }
 
 // What a field sounds like under the music: keyed by the map's mood.
-const AMBIENCE = { day: null, dusk: 'wind', mist: 'wind', marsh: 'marsh', rain: 'rain', ember: 'embers', night: 'night', snow: 'wind', aurora: 'night', tide: 'sea', storm: 'rain', abyss: 'sea', dawn: 'wind', court: null };
+const AMBIENCE = { day: null, dusk: 'wind', mist: 'wind', marsh: 'marsh', rain: 'rain', ember: 'embers', night: 'night', snow: 'wind', aurora: 'night', tide: 'sea', storm: 'rain', abyss: 'sea', dawn: 'wind', court: null, ash: 'embers', lantern: 'night', glass: 'wind', hollow: 'night' };
 
 // Continuous weather and wildlife, built from the same noise and tones as the
 // effects, sitting quietly under the theme and muted with it.

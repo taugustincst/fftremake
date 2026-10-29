@@ -2,7 +2,7 @@
    Battle grid: tiles, heights, passability, pathfinding and range queries.
    ========================================================================== */
 
-const IMPASSABLE = new Set(['w', 't', 'x']);
+const IMPASSABLE = new Set(['w', 't', 'x', 'p']);
 
 class Grid {
   constructor(mapDef) {

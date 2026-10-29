@@ -21,7 +21,7 @@ const read = (p) => fs.readFileSync(path.join(ROOT, p), 'utf8');
 const dataUri = (p) =>
   'data:image/png;base64,' + fs.readFileSync(path.join(ROOT, p)).toString('base64');
 
-const SCRIPTS = ['i18n', 'audio', 'data', 'maps', 'story', 'color', 'icons', 'sprites', 'unit', 'map', 'battle', 'fx', 'render', 'ui', 'game', 'billing'];
+const SCRIPTS = ['i18n', 'audio', 'data', 'data2', 'maps', 'maps2', 'story', 'story2', 'color', 'icons', 'sprites', 'unit', 'map', 'battle', 'fx', 'render', 'ui', 'game', 'billing'];
 
 let html = read('index.html');
 

@@ -51,7 +51,7 @@ function makeParty(size, level) {
 function makeFoes(map, count, level) {
   const spots = [];
   for (let y = 0; y < map.h; y++) for (let x = 0; x < map.w; x++) {
-    if ('wtx'.includes(map.terrain[y][x])) continue;
+    if ('wtxp'.includes(map.terrain[y][x])) continue;
     const d = Math.min(...map.deploy.map(p => Math.abs(p[0] - x) + Math.abs(p[1] - y)));
     if (d >= 5) spots.push({ x, y });
   }

@@ -1819,7 +1819,7 @@ function bestGearFor(job, pool, maxTier, extra) {
   if (!eq) return {};
   // The default pool is what a wagon could sell: never an improved piece,
   // a forge's recipe or a material, which would otherwise win every slot.
-  const ids = pool || Object.keys(ITEMS).filter(i => ITEMS[i].tier <= (maxTier === undefined ? 6 : maxTier) && !ITEMS[i].base && !ITEMS[i].forge && ITEMS[i].slot !== 'material');
+  const ids = pool || Object.keys(ITEMS).filter(i => ITEMS[i].tier <= (maxTier === undefined ? 6 : maxTier) && !ITEMS[i].base && !ITEMS[i].forge && ITEMS[i].from === undefined && ITEMS[i].slot !== 'material');
   const gear = {};
   const used = {};
   for (const slot of ['weapon', 'offhand', 'head', 'body', 'acc']) {
@@ -1849,7 +1849,9 @@ function enemyGearFor(job, level, tierShift) {
   // piece of gear that would quietly cancel it.
   const innate = (JOBS[job] && JOBS[job].affinity) || {};
   const weak = Object.keys(innate).filter(e => innate[e] === 'weak');
-  const pool = Object.keys(ITEMS).filter(i => ITEMS[i].tier <= tier && !ITEMS[i].late && !ITEMS[i].city && !ITEMS[i].forge && !ITEMS[i].base && ITEMS[i].slot !== 'material' && !(ITEMS[i].resist && weak.some(e => ITEMS[i].resist[e])));
+  // The Hollow Sky's arms (`from`) are the Marches' own and are never issued
+  // either: a bandit on the Verdant Road does not carry a pass spear.
+  const pool = Object.keys(ITEMS).filter(i => ITEMS[i].tier <= tier && !ITEMS[i].late && !ITEMS[i].city && !ITEMS[i].forge && !ITEMS[i].base && ITEMS[i].from === undefined && ITEMS[i].slot !== 'material' && !(ITEMS[i].resist && weak.some(e => ITEMS[i].resist[e])));
   return bestGearFor(job, pool, tier);
 }
 

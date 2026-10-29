@@ -83,7 +83,10 @@ complains about a version, the two pinned ones are the AGP version in
 Play Console → Create app → name `Chronicles of Elderon`, App, Free,
 default language English. (The app is free with an in-app purchase:
 create and activate the `full_unlock` product at $8.99 under Monetize →
-In-app products, and add testers under Settings → License testing so
+In-app products, and beside it the `hollow_sky` product at $5.99, which
+sells the expansion campaign (js/billing.js reads both; until the
+second product exists and is active, the expansion is simply open in
+the Play edition, the same as on the web). Add testers under Settings → License testing so
 the closed test can exercise the unlock for free. Purchases must be
 acknowledged through the Play Developer API within 3 days or Play
 refunds them — a minimal acknowledgement endpoint is a launch step,

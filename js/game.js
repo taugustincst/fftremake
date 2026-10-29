@@ -14,25 +14,18 @@ const TIPS_KEY = 'elderon.tips';
 // a chat message, an email or a paste into a notes app.
 const CODE_TAG = 'ELDERON1.';
 // Shown in the credits; tools/regress.js keeps it equal to package.json's.
-const GAME_VERSION = '1.15.0';
+const GAME_VERSION = '2.0.0';
 // Where each chapter sits on the map of the realm, as fractions of the canvas.
 // Twelve stops: Act I runs east along the lower road, Act II turns back west
 // along the coast above it, so the two never cross on the parchment.
 // Twenty-two stops in four bands: Act I east along the lower road, Act II
 // back west along the coast, Act III north over the ice, and Act IV out onto
 // the Sunder Sea along the top, where the parchment gives way to water.
-const WORLD_ROUTE = [
-  [0.06, 0.93], [0.18, 0.83], [0.30, 0.93], [0.42, 0.83], [0.54, 0.93], [0.66, 0.83], [0.80, 0.92],
-  [0.92, 0.74], [0.78, 0.66], [0.62, 0.72], [0.46, 0.64], [0.30, 0.70],
-  [0.14, 0.58], [0.08, 0.44], [0.24, 0.38], [0.42, 0.44], [0.58, 0.36],
-  [0.72, 0.28], [0.86, 0.26], [0.92, 0.12], [0.76, 0.08], [0.56, 0.14],
-  [0.68, 0.44], [0.50, 0.50],
-];
 // Where the land ends on the map, as a fraction of its height at each x.
 const SEA_LINE = (fx) => 0.21 + Math.sin(fx * 9) * 0.02 + Math.sin(fx * 23 + 1) * 0.01;
-// The roster's ceiling: nine recruits join through the story, and the tavern
-// fills what is left.
-const PARTY_MAX = 16;
+// The roster's ceiling: nine recruits join through the first road and four
+// more east of the Greywall, and the tavern fills what is left.
+const PARTY_MAX = 20;
 // The forge's four pages, in the order they are shown.
 const FORGE_TABS = [['improve', 'Improve'], ['craft', 'Craft'], ['salvage', 'Salvage'], ['materials', 'Materials']]; // labels pass through tr()
 const HIRE_NAMES = ['Aldo', 'Bea', 'Corin', 'Dessa', 'Emeric', 'Faye', 'Gil', 'Hollis', 'Ines', 'Joss', 'Kit', 'Lune', 'Marek', 'Nia', 'Orrin', 'Pell'];
@@ -49,21 +42,33 @@ const store = {
 
 // The road is the common chapters, then, once a road is chosen at the
 // capital, that road's own chapters. Everything that asks "which chapter is
-// this" goes through chapterAt so the fork is invisible to it.
-const COMMON = CAMPAIGN.length;
+// this" goes through chapterAt so the fork is invisible to it. Which road
+// that is depends on the save's campaign: the base game, or the Hollow Sky
+// (see CAMPAIGNS in story2.js); cam() answers for the save in hand.
+// Every road and every city of every campaign, for reading saves back.
+const ALL_ROADS = Object.assign({}, ...Object.values(CAMPAIGNS).map(c => c.roads));
+const ALL_CITIES = Object.values(CAMPAIGNS).flatMap(c => c.cities);
+const ALL_CHAPTERS = Object.values(CAMPAIGNS).flatMap(c => c.chapters);
 
 class Game {
+  // The campaign a save is on; the base game unless it says otherwise.
+  cam(state = this.state) { return (state && CAMPAIGNS[state.campaign]) || CAMPAIGNS.base; }
+  // How many chapters lie before the fork on this save's road.
+  common(state = this.state) { return this.cam(state).chapters.length; }
+  // The cities on this save's map.
+  cities(state = this.state) { return this.cam(state).cities; }
   // The chapter at a road index, or null past the end (or at the fork before
   // a road is chosen).
   chapterAt(i, state = this.state) {
-    if (i < COMMON) return CAMPAIGN[i];
-    const road = state && state.branch && ROADS[state.branch];
-    return road ? road.chapters[i - COMMON] || null : null;
+    const c = this.cam(state);
+    if (i < c.chapters.length) return c.chapters[i];
+    const road = state && state.branch && c.roads[state.branch];
+    return road ? road.chapters[i - c.chapters.length] || null : null;
   }
   // How long the road is for this save: the fork counts as the next step
   // until a road is chosen.
-  roadLength(state = this.state) { return state && state.branch ? COMMON + ROADS[state.branch].chapters.length : COMMON; }
-  atFork(state = this.state) { return !!state && state.chapter === COMMON && !state.branch; }
+  roadLength(state = this.state) { const c = this.cam(state); return state && state.branch && c.roads[state.branch] ? c.chapters.length + c.roads[state.branch].chapters.length : c.chapters.length; }
+  atFork(state = this.state) { return !!state && state.chapter === this.common(state) && !state.branch; }
   roadDone(state = this.state) { return !!state && !!state.branch && state.chapter >= this.roadLength(state); }
 
   constructor() {
@@ -174,6 +179,7 @@ class Game {
 
   bindScreens() {
     $('btn-new').onclick = () => this.newGame();
+    if ($('btn-new-hollow')) $('btn-new-hollow').onclick = () => this.newHollowSky();
     $('btn-continue').onclick = () => this.loadGame();
     $('btn-load').onclick = () => this.openSlots('load');
     $('btn-slots-back').onclick = () => this.showScreen('title');
@@ -321,7 +327,7 @@ class Game {
     if (flow && flow.kind === 'chapter') {
       const ch = this.chapterAt(flow.index);
       if (!ch) return;
-      const key = s.branch && flow.index >= COMMON ? `${s.branch}:${ch.id}` : ch.id;
+      const key = s.branch && flow.index >= this.common() ? `${s.branch}:${ch.id}` : ch.id;
       const c = r.chapters[key] = r.chapters[key] || { cleared: false, firstTry: false, bestTurns: null, attempts: 0 };
       if (!c.cleared) c.attempts += attempts; // tries until the first clear
       if (res === 'victory') {
@@ -335,8 +341,9 @@ class Game {
     const el = $('records'); if (!el) return;
     const s = this.state, r = s.records || Game.freshRecords();
     const mins = Math.round((s.playtime || 0) / 60000), time = mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins}m`;
+    const cam = this.cam(), ROADS = cam.roads, ROAD_ORDER = cam.roadOrder;
     const endings = ROAD_ORDER.map(id => `<span class="ending ${s.endings && s.endings[id] ? 'seen' : ''}">${s.endings && s.endings[id] ? '✓ ' : ''}${ROADS[id].title}</span>`).join('');
-    const rows = [...CAMPAIGN.map(c => [c.id, c]), ...(s.branch ? ROADS[s.branch].chapters.map(c => [`${s.branch}:${c.id}`, c]) : [])]
+    const rows = [...cam.chapters.map(c => [c.id, c]), ...(s.branch && ROADS[s.branch] ? ROADS[s.branch].chapters.map(c => [`${s.branch}:${c.id}`, c]) : [])]
       .filter(([key]) => r.chapters[key] && r.chapters[key].cleared)
       .map(([key, c]) => { const x = r.chapters[key]; return `<tr><td>${c.title}</td><td>${x.firstTry ? '✓' : `${x.attempts}×`}</td><td>${x.bestTurns !== null ? tr('{n} turns', { n: x.bestTurns }) : '—'}</td></tr>`; }).join('');
     const firstTries = Object.values(r.chapters).filter(c => c.cleared && c.firstTry).length, cleared = Object.values(r.chapters).filter(c => c.cleared).length;
@@ -345,7 +352,7 @@ class Game {
     const plusable = Object.keys(s.endings || {}).length > 0;
     el.innerHTML = `
       <div class="rec-line">${tr('{time} played', { time })} · ${tr('Battles: {won} won of {n}', { won: r.won, n: r.fought })} · ${tr('Chapters cleared first try: {n} of {total}', { n: firstTries, total: cleared })}${r.plus ? ` · ${tr('New Game + {n}', { n: r.plus })}` : ''}</div>
-      <div class="rec-endings"><b>${tr('Endings seen: {n} of {total}', { n: Object.keys(s.endings || {}).length, total: ROAD_ORDER.length })}</b> ${endings}</div>
+      <div class="rec-endings"><b>${tr('Endings seen: {n} of {total}', { n: ROAD_ORDER.filter(id => s.endings && s.endings[id]).length, total: ROAD_ORDER.length })}</b> ${endings}</div>
       ${rows ? `<table class="rec-table"><thead><tr><th>${tr('Chapter')}</th><th>${tr('Tries')}</th><th>${tr('Best')}</th></tr></thead><tbody>${rows}</tbody></table>` : `<p class="muted">${tr('No chapter cleared yet.')}</p>`}
       ${kills ? `<div class="rec-kills"><b>${tr('Kills by trade')}</b> ${kills}</div>` : ''}
       <div class="rec-roll">${roll}</div>
@@ -366,7 +373,7 @@ class Game {
     this.state = {
       party, gil: 500, chapter: 0, victories: 0, trials: 0, inventory: {}, difficulty: 'paladin',
       errands: { offered: [], active: [], reports: [] }, cities: {}, slot: s.slot, playtime: s.playtime || 0,
-      branch: null, endings: s.endings || {}, exiled: [], records,
+      branch: null, endings: s.endings || {}, exiled: [], records, campaign: null, prior: null,
     };
     this.cityView = null;
     this.saveGame();
@@ -475,9 +482,75 @@ class Game {
       party: STARTING_PARTY.map(p => new Unit(Object.assign({ team: 'player' }, p))),
       gil: 500, chapter: 0, victories: 0, trials: 0, inventory: {}, difficulty: 'knight',
       errands: { offered: [], active: [], reports: [] }, cities: {}, slot, playtime: 0,
-      branch: null, endings: {}, exiled: [], records: Game.freshRecords(),
+      branch: null, endings: {}, exiled: [], records: Game.freshRecords(), campaign: null, prior: null,
     };
     this.sessionStart = Date.now();
+    this.showWorld();
+  }
+
+  /* The Hollow Sky, begun from the title: the thirteen of the first road
+     at the level the war left them, with their trades learned and a war's
+     purse, in a slot of their own. A finished game goes east instead with
+     its own company (see goEast). */
+  newHollowSky(slot) {
+    if (window.Billing && Billing.locksExpansion && Billing.locksExpansion()) { this.openUnlock('expansion'); return; }
+    if (!slot) {
+      const free = this.listSlots().find(x => !x.d);
+      if (!free) return this.openSlots('newHollow');
+      slot = free.n;
+    }
+    const cam = CAMPAIGNS.hollowsky;
+    const party = cam.party.map(p => {
+      const u = new Unit(Object.assign({ team: 'player' }, p));
+      u.autoLearn(0.75);
+      u.jp[u.job] = 400; u.jpTotal[u.job] = 1000;
+      const kit = bestGearFor(u.job, null, 6);
+      u.gear = {}; for (const [slotName, id] of Object.entries(kit)) if (id) u.gear[slotName] = id;
+      u.resetBattleState();
+      return u;
+    });
+    this.state = {
+      party, gil: cam.gil, chapter: 0, victories: 0, trials: 0, inventory: {}, difficulty: 'knight',
+      errands: { offered: [], active: [], reports: [] }, cities: {}, slot, playtime: 0,
+      branch: null, endings: {}, exiled: [], records: Game.freshRecords(), campaign: 'hollowsky', prior: null,
+    };
+    this.sessionStart = Date.now();
+    this.saveGame();
+    this.showCampTab('road');
+    this.showWorld();
+  }
+
+  /* East over the Greywall: a company that has walked a road of the first
+     game to its end takes the Hollow Sky with everything it has. Where it
+     stood is kept, so the capital can be walked back to from the Marches. */
+  async goEast() {
+    const s = this.state; if (!s || s.campaign) return;
+    if (window.Billing && Billing.locksExpansion && Billing.locksExpansion()) { this.openUnlock('expansion'); return; }
+    if (!(await this.ask(tr('Go east over the Greywall? The company takes everything it has. The capital and its roads can be walked back to from the Marches.'), { yes: tr('Go east'), no: tr('Not yet') }))) return;
+    if (!this.state || this.state !== s || s.campaign) return;
+    s.prior = { chapter: s.chapter, branch: s.branch || null };
+    for (const saved of s.exiled || []) if (!s.party.some(u => u.name === saved.name)) s.party.push(Unit.fromSave(Object.assign({ team: 'player' }, saved)));
+    s.exiled = [];
+    s.campaign = 'hollowsky'; s.chapter = 0; s.branch = null;
+    s.errands.offered = [];
+    this.cityView = null; this.travel = null;
+    audio.sfx('select');
+    this.saveGame();
+    this.toast(tr('The company turns east.'));
+    this.showCampTab('road');
+    this.showWorld();
+  }
+
+  // Back over the Greywall to the capital, as the first road left it.
+  async goWest() {
+    const s = this.state; if (!s || !s.campaign || !s.prior) return;
+    if (!(await this.ask(tr('Return west over the Greywall to the capital? The company keeps everything it has, and the Marches can be come back to.'), { yes: tr('Return west'), no: tr('Not yet') }))) return;
+    if (!this.state || this.state !== s || !s.campaign) return;
+    s.prior2 = { chapter: s.chapter, branch: s.branch || null };
+    s.campaign = null; s.chapter = s.prior.chapter; s.branch = s.prior.branch;
+    s.errands.offered = [];
+    this.cityView = null; this.travel = null;
+    this.saveGame();
     this.showWorld();
   }
 
@@ -506,11 +579,13 @@ class Game {
 
   slotSummary(d) {
     const ch = Number.isFinite(d.chapter) ? d.chapter : 0;
-    const road = d.branch && ROADS[d.branch];
-    const chap = ch < COMMON ? CAMPAIGN[ch] : road && road.chapters[ch - COMMON];
-    let where = chap ? `${tr('Act {n}', { n: Math.min(ACTS.length, ACTS.findIndex(a => ch >= a.from && ch <= a.to) + 1 || ACTS.length) })} · ${tr('Chapter {n}', { n: ch + 1 })} · ${chap.title}`
-      : ch === COMMON && !road ? tr('Five Roads · at the capital')
-      : `${road ? road.ending.title : tr('After the war')} · ${tr('Trial {n}', { n: (d.trials || 0) + 1 })}`;
+    const cam = CAMPAIGNS[d.campaign] || CAMPAIGNS.base, ACTS = cam.acts, COMMON = cam.chapters.length;
+    const road = d.branch && cam.roads[d.branch];
+    const chap = ch < COMMON ? cam.chapters[ch] : road && road.chapters[ch - COMMON];
+    const camName = cam.id === 'base' ? '' : `${cam.title} · `;
+    let where = chap ? `${camName}${tr('Act {n}', { n: Math.min(ACTS.length, ACTS.findIndex(a => ch >= a.from && ch <= a.to) + 1 || ACTS.length) })} · ${tr('Chapter {n}', { n: ch + 1 })} · ${chap.title}`
+      : ch === COMMON && !road ? (cam.id === 'base' ? tr('Five Roads · at the capital') : `${camName}${cam.forkLabel}`)
+      : `${camName}${road ? road.ending.title : tr('After the war')} · ${tr('Trial {n}', { n: (d.trials || 0) + 1 })}`;
     const lv = d.party.length ? Math.round(d.party.reduce((a, u) => a + (u.level || 1), 0) / d.party.length) : 1;
     const mins = Math.round((d.playtime || 0) / 60000), time = mins >= 60 ? `${Math.floor(mins / 60)}h ${mins % 60}m` : `${mins}m`;
     const ago = d.savedAt ? (() => { const m = Math.round((Date.now() - d.savedAt) / 60000); return m < 2 ? tr('just now') : m < 60 ? tr('{n} min ago', { n: m }) : m < 2880 ? tr('{n} h ago', { n: Math.round(m / 60) }) : tr('{n} days ago', { n: Math.round(m / 1440) }); })() : tr('an older save');
@@ -524,10 +599,10 @@ class Game {
     this.slotMode = mode;
     $('slots-title').textContent = mode === 'new' ? tr('Every slot is taken. Which one gives way?') : tr('Load a game');
     $('slots-list').innerHTML = this.listSlots().map(({ n, d }) => {
-      if (!d) return `<div class="slot empty"><div class="slot-text"><b>${tr('Slot {n}', { n })}</b><small>${tr('empty')}</small></div><div class="slot-actions">${mode === 'new' ? `<button data-slot-new="${n}" class="primary">${tr('Start here')}</button>` : ''}</div></div>`;
+      if (!d) return `<div class="slot empty"><div class="slot-text"><b>${tr('Slot {n}', { n })}</b><small>${tr('empty')}</small></div><div class="slot-actions">${mode === 'new' || mode === 'newHollow' ? `<button data-slot-new="${n}" class="primary">${tr('Start here')}</button>` : ''}</div></div>`;
       const sum = this.slotSummary(d);
       return `<div class="slot"><div class="slot-text"><b>${tr('Slot {n}', { n })}</b> <span class="slot-where">${sum.where}</span><small>${sum.leader} · ${sum.line}</small></div>
-        <div class="slot-actions">${mode === 'new' ? `<button data-slot-new="${n}">${tr('Overwrite')}</button>` : `<button data-slot-load="${n}" class="primary">${tr('Load')}</button><button data-slot-export="${n}" class="mini">${tr('Export')}</button><button data-slot-del="${n}" class="mini">${tr('Delete')}</button>`}</div></div>`;
+        <div class="slot-actions">${mode === 'new' || mode === 'newHollow' ? `<button data-slot-new="${n}">${tr('Overwrite')}</button>` : `<button data-slot-load="${n}" class="primary">${tr('Load')}</button><button data-slot-export="${n}" class="mini">${tr('Export')}</button><button data-slot-del="${n}" class="mini">${tr('Delete')}</button>`}</div></div>`;
     }).join('');
     $('slots-list').querySelectorAll('button[data-slot-export]').forEach(b => b.onclick = () => this.openTransfer('export', +b.dataset.slotExport));
     $('transfer').hidden = true;
@@ -535,7 +610,7 @@ class Game {
     $('slots-list').querySelectorAll('button[data-slot-new]').forEach(b => b.onclick = async () => {
       const n = +b.dataset.slotNew;
       if (this.listSlots()[n - 1].d && !(await this.ask(tr('Write over slot {n}? That game is gone for good.', { n }), { yes: 'Overwrite' }))) return;
-      this.newGame(n);
+      if (this.slotMode === 'newHollow') this.newHollowSky(n); else this.newGame(n);
     });
     $('slots-list').querySelectorAll('button[data-slot-del]').forEach(b => b.onclick = async () => {
       const n = +b.dataset.slotDel;
@@ -622,8 +697,9 @@ class Game {
     this.state.playtime = (this.state.playtime || 0) + Math.max(0, now - (this.sessionStart || now));
     this.sessionStart = now;
     const data = {
-      v: 5, gil: this.state.gil, chapter: this.state.chapter, victories: this.state.victories, trials: this.state.trials || 0,
+      v: 6, gil: this.state.gil, chapter: this.state.chapter, victories: this.state.victories, trials: this.state.trials || 0,
       branch: this.state.branch || null, endings: this.state.endings || {}, exiled: this.state.exiled || [],
+      campaign: this.state.campaign || null, prior: this.state.prior || null, prior2: this.state.prior2 || null,
       difficulty: this.state.difficulty, errands: this.state.errands, cities: this.state.cities || {},
       records: this.state.records || Game.freshRecords(),
       inventory: this.state.inventory, party: this.state.party.map(u => u.toSave()),
@@ -667,8 +743,11 @@ class Game {
     this.state = {
       gil: Number.isFinite(d.gil) ? d.gil : 0,
       chapter: Number.isFinite(d.chapter) ? Math.max(0, d.chapter) : 0,
-      branch: ROADS[d.branch] ? d.branch : null,
-      endings: Object.fromEntries(Object.keys(d.endings || {}).filter(k => ROADS[k]).map(k => [k, true])),
+      campaign: CAMPAIGNS[d.campaign] && d.campaign !== 'base' ? d.campaign : null,
+      prior: d.prior && Number.isFinite(d.prior.chapter) ? { chapter: Math.max(0, d.prior.chapter), branch: ALL_ROADS[d.prior.branch] ? d.prior.branch : null } : null,
+      prior2: d.prior2 && Number.isFinite(d.prior2.chapter) ? { chapter: Math.max(0, d.prior2.chapter), branch: ALL_ROADS[d.prior2.branch] ? d.prior2.branch : null } : null,
+      branch: ALL_ROADS[d.branch] ? d.branch : null,
+      endings: Object.fromEntries(Object.keys(d.endings || {}).filter(k => ALL_ROADS[k]).map(k => [k, true])),
       exiled: Array.isArray(d.exiled) ? d.exiled.filter(u => u && u.name) : [],
       victories: d.victories || 0,
       trials: d.trials || 0,
@@ -683,7 +762,9 @@ class Game {
     // A save that went past the end (a finished game from before the roads
     // forked, or a road walked to its end) sits at the end of its road.
     this.state.chapter = Math.min(this.state.chapter, this.roadLength());
-    for (const id of Object.keys(d.cities || {})) if (CITIES.some(c => c.id === id) && d.cities[id]) this.state.cities[id] = true;
+    // A road named by a save must be one of its campaign's, or the fork is taken again.
+    if (this.state.branch && !this.cam().roads[this.state.branch]) { this.state.branch = null; this.state.chapter = Math.min(this.state.chapter, this.common()); }
+    for (const id of Object.keys(d.cities || {})) if (ALL_CITIES.some(c => c.id === id) && d.cities[id]) this.state.cities[id] = true;
     // Errands are kept only where they still make sense: a known errand, sent
     // with a unit that is still in the party.
     const e = d.errands || {};
@@ -728,7 +809,7 @@ class Game {
     const opts = { resume: saved, resumeLog: log || [], resumeMeta: meta || null, objective: null, kind: flow.kind, flow };
     try {
       if (flow.kind === 'chapter') await this.startNextChapter(opts);
-      else if (flow.kind === 'city') { const city = CITIES.find(c => c.id === flow.id); if (!city) throw new Error('no city'); await this.liberateCity(city, opts); }
+      else if (flow.kind === 'city') { const city = ALL_CITIES.find(c => c.id === flow.id); if (!city) throw new Error('no city'); await this.liberateCity(city, opts); }
       else if (flow.kind === 'trial') await this.startTrial(opts);
       else await this.battleFlow(MAPS[saved.map], [], flow.gil || 0, opts);
     } catch (e) {
@@ -797,7 +878,14 @@ class Game {
 
   // Gear the shop stocks, widening as the campaign advances.
   // From the Aether Yards on, and after the war, the wagon carries the legendary arms, tier 7.
-  shopTier() { const c = this.state.chapter; return !this.chapterAt(c) || c >= 10 ? 7 : Math.min(6, c + 1); }
+  shopTier() { const fixed = this.cam().shopTier; if (fixed) return fixed; const c = this.state.chapter; return !this.chapterAt(c) || c >= 10 ? 7 : Math.min(6, c + 1); }
+  // Whether the wagon carries a piece on this save: the Hollow Sky's arms
+  // arrive as its road is walked, and never on the first game's wagon.
+  wagonCarries(id) {
+    const it = ITEMS[id]; if (!it) return false;
+    if (it.from === undefined) return true;
+    return this.cam().id === 'hollowsky' && this.state.chapter >= it.from;
+  }
 
   // Reconcile a unit's gear with its job after a job change: anything the new job
   // cannot wear goes back into stock, and empty core slots are refilled from
@@ -840,46 +928,58 @@ class Game {
         : tr('Defeat every enemy');
       const topLevel = Math.max(...ch.enemies.map(e => e.level));
       const ready = this.readiness(ch);
+      const cam = this.cam(), ACTS = cam.acts, ROADS = cam.roads;
       const act = ACTS.find(a => s.chapter >= a.from && s.chapter <= a.to) || ACTS[ACTS.length - 1];
       const roadName = s.branch ? ` · ${ROADS[s.branch].title}` : '';
+      const camName = cam.id === 'base' ? '' : `${cam.title} · `;
       $('world-next').innerHTML = `
-        <div class="chapter-num">${tr('Act {n}', { n: ACTS.indexOf(act) + 1 })} · ${act.title}${roadName} · ${tr('Chapter {n}', { n: s.chapter + 1 })}</div>
+        <div class="chapter-num">${camName}${tr('Act {n}', { n: ACTS.indexOf(act) + 1 })} · ${act.title}${roadName} · ${tr('Chapter {n}', { n: s.chapter + 1 })}</div>
         <div class="chapter-title">${ch.title}</div>
         <div class="chapter-map">${MAPS[ch.map].name} · ${tr('{n} enemies · up to Lv {lv}', { n: ch.enemies.length, lv: topLevel })}</div>
         <div class="chapter-goal">${tr('Objective: {goal}', { goal })}${o.protectLeader ? ` · ${tr('Rowan must not be lost')}` : ''}</div>
         ${ready ? `<div class="chapter-warn">${ready}</div>` : ''}
-        ${window.Billing && Billing.locksChapter(s.chapter) ? `<div class="chapter-warn">${tr('The demo ends at the Gates of Dunmarch. This road opens with the full game.')}</div>` : ''}
+        ${window.Billing && !s.campaign && Billing.locksChapter(s.chapter) ? `<div class="chapter-warn">${tr('The demo ends at the Gates of Dunmarch. This road opens with the full game.')}</div>` : ''}
         ${s.chapter > 0 ? `<div class="chapter-map revisit-row"><label>${tr('Fight a won field again for half the pay:')} <select id="revisit-sel">${this.wonChapters().map(([i, c]) => `<option value="${i}">${i + 1}. ${c.title}</option>`).join('')}</select></label> <button id="btn-revisit" class="mini">${tr('Revisit')}</button></div>` : ''}`;
       if ($('btn-revisit')) $('btn-revisit').onclick = () => this.revisitChapter(+$('revisit-sel').value);
       $('btn-battle').disabled = false;
       $('btn-battle').textContent = tr('March to Battle');
     } else if (this.atFork()) {
-      // The capital: five roads, and the player picks one.
-      const seen = Object.keys(s.endings || {}).filter(k => ROADS[k]);
+      // The capital: five roads, and the player picks one. (The tower: three answers.)
+      const cam = this.cam(), ACTS = cam.acts, ROADS = cam.roads, CHOICE = cam.choice;
+      const seen = cam.roadOrder.filter(k => s.endings && s.endings[k]);
       $('world-next').innerHTML = `
-        <div class="chapter-num">Act ${ACTS.length} · ${ACTS[ACTS.length - 1].title} · ${CHOICE.title}</div>
+        <div class="chapter-num">${cam.id === 'base' ? '' : `${cam.title} · `}Act ${ACTS.length} · ${ACTS[ACTS.length - 1].title} · ${CHOICE.title}</div>
         <div class="chapter-title">${CHOICE.title}</div>
         <div class="chapter-map">${CHOICE.lines[0]}</div>
-        <div class="chapter-goal">Choose a road. Each is two chapters and an ending of its own.${seen.length ? ` Endings seen: ${seen.map(k => ROADS[k].title).join(', ')}.` : ''}</div>
+        <div class="chapter-goal">${cam.forkGoal}${seen.length ? ` Endings seen: ${seen.map(k => ROADS[k].title).join(', ')}.` : ''}</div>
         <div class="chapter-map revisit-row"><label>${tr('Fight a won field again for half the pay:')} <select id="revisit-sel">${this.wonChapters().map(([i, c]) => `<option value="${i}">${i + 1}. ${c.title}</option>`).join('')}</select></label> <button id="btn-revisit" class="mini">${tr('Revisit')}</button></div>`;
       if ($('btn-revisit')) $('btn-revisit').onclick = () => this.revisitChapter(+$('revisit-sel').value);
       $('btn-battle').disabled = false;
-      $('btn-battle').textContent = tr('Choose a Road');
+      $('btn-battle').textContent = tr(cam.forkButton);
     } else {
       // The road is walked; the trials are what a company does with peace,
       // and the capital waits with the roads not taken.
       const n = (s.trials || 0) + 1, t = this.trialSpec(n);
-      const road = ROADS[s.branch], seen = Object.keys(s.endings || {}).filter(k => ROADS[k]);
+      const cam = this.cam(), ROADS = cam.roads, ROAD_ORDER = cam.roadOrder;
+      const road = ROADS[s.branch], seen = ROAD_ORDER.filter(k => s.endings && s.endings[k]);
       const left = ROAD_ORDER.filter(k => !s.endings[k]);
+      // The way on: east over the Greywall from the first game's end, or
+      // back west from the Marches' end.
+      const onward = !s.campaign && CAMPAIGNS.hollowsky
+        ? `<div class="chapter-map revisit-row hollow-row"><b>${CAMPAIGNS.hollowsky.title}</b> · ${CAMPAIGNS.hollowsky.blurb} <button id="btn-east" class="mini primary">${tr('Go east')}</button></div>`
+        : s.campaign && s.prior ? `<div class="chapter-map revisit-row"><button id="btn-west" class="mini">${tr('Return west to the capital')}</button></div>` : '';
       $('world-next').innerHTML = `
-        <div class="chapter-num">${road ? road.ending.title : tr('After the war')} · ${tr('Trial {n}', { n })}</div>
+        <div class="chapter-num">${cam.id === 'base' ? '' : `${cam.title} · `}${road ? road.ending.title : tr('After the war')} · ${tr('Trial {n}', { n })}</div>
         <div class="chapter-title">${t.title}</div>
         <div class="chapter-map">${MAPS[t.map].name} · ${tr('{n} enemies · Lv {lv}', { n: t.enemies.length, lv: t.level })}</div>
         <div class="chapter-goal">${tr('Objective: {goal}', { goal: tr('Defeat every enemy') })} · ${tr('{n} marks', { n: t.gil })}</div>
         <div class="chapter-map">Each trial is harder than the last, and nothing is lost by failing one. The wagon carries legendary arms, and a trial won may turn one up.</div>
-        <div class="chapter-goal act-after">${road ? road.ending.after : AFTER_THE_WAR}</div>
-        <div class="chapter-map revisit-row">Endings seen: ${seen.map(k => ROADS[k].title).join(', ') || 'none'} (${seen.length} of ${ROAD_ORDER.length}).${left.length ? ` <button id="btn-another" class="mini">Another road</button>` : ' Every road has been walked.'}</div>`;
+        <div class="chapter-goal act-after">${road ? road.ending.after : cam.after}</div>
+        <div class="chapter-map revisit-row">Endings seen: ${seen.map(k => ROADS[k].title).join(', ') || 'none'} (${seen.length} of ${ROAD_ORDER.length}).${left.length ? ` <button id="btn-another" class="mini">${cam.id === 'base' ? 'Another road' : 'Another answer'}</button>` : cam.id === 'base' ? ' Every road has been walked.' : ' Every answer has been given.'}</div>
+        ${onward}`;
       if ($('btn-another')) $('btn-another').onclick = () => this.anotherRoad();
+      if ($('btn-east')) $('btn-east').onclick = () => this.goEast();
+      if ($('btn-west')) $('btn-west').onclick = () => this.goWest();
       $('btn-battle').disabled = false;
       $('btn-battle').textContent = tr('Trial {n}', { n });
     }
@@ -915,7 +1015,7 @@ class Game {
     const el = $('camp-tabs'); if (!el) return;
     const s = this.state;
     const cur = this.campTab || store.get('elderon.campTab') || 'road';
-    const liberable = CITIES.filter(c => this.cityReachable(c) && !this.cityOpen(c.id)).length;
+    const liberable = this.cities().filter(c => this.cityReachable(c) && !this.cityOpen(c.id)).length;
     const reports = (s.errands && s.errands.reports || []).length;
     const tabs = [
       ['road', tr('Road'), 0], ['company', tr('Company'), reports], ['cities', tr('Cities'), liberable], ['records', tr('Records'), 0], ['options', tr('Options'), 0],
@@ -954,8 +1054,8 @@ class Game {
     const s = this.state, ch = this.chapterAt(s.chapter);
     let lines;
     if (ch) lines = ch.camp || [];
-    else if (this.atFork()) lines = CHOICE.lines;
-    else { const epi = s.branch && ROADS[s.branch] ? ROADS[s.branch].ending.camp : EPILOGUE_CAMP; const n = Math.min(epi.length, 2 + (s.trials || 0)); lines = epi.slice(0, n); }
+    else if (this.atFork()) lines = this.cam().choice.lines;
+    else { const cam = this.cam(); const epi = s.branch && cam.roads[s.branch] ? cam.roads[s.branch].ending.camp : cam.epilogue; const n = Math.min(epi.length, 2 + (s.trials || 0)); lines = epi.slice(0, n); }
     el.innerHTML = '';
     for (const l of lines) el.appendChild(this.storyLine(l, 1.5));
     if (!lines.length) el.innerHTML = '<p class="muted">The fire burns low. Nobody has anything to say.</p>';
@@ -1323,21 +1423,21 @@ class Game {
   renderCities() {
     const el = $('cities'); if (!el) return;
     const s = this.state;
-    if (this.cityView) { const city = CITIES.find(c => c.id === this.cityView); if (city && this.cityOpen(city.id)) return this.renderCityPanel(city); this.cityView = null; }
-    const rows = CITIES.filter(c => this.cityReachable(c)).map(c => {
+    if (this.cityView) { const city = this.cities().find(c => c.id === this.cityView); if (city && this.cityOpen(city.id)) return this.renderCityPanel(city); this.cityView = null; }
+    const rows = this.cities().filter(c => this.cityReachable(c)).map(c => {
       const open = this.cityOpen(c.id);
       return `<div class="city ${open ? 'open' : 'held'}" data-city="${c.id}">
         <div class="city-text"><b>${c.name}</b> <small>${open ? 'open' : c.held + ' · Lv ' + Math.max(c.level, this.avgLevel() - 1)}</small><div class="city-blurb">${open ? c.open : c.blurb}</div></div>
         <button data-city-go="${c.id}" class="${open ? '' : 'primary'}">${open ? 'Visit' : 'Liberate'}</button>
       </div>`;
     }).join('');
-    const ahead = CITIES.filter(c => !this.cityReachable(c)).length;
+    const ahead = this.cities().filter(c => !this.cityReachable(c)).length;
     el.innerHTML = rows + (ahead ? `<div class="city muted"><small>${ahead} more ${ahead === 1 ? 'city lies' : 'cities lie'} further along the road.</small></div>` : '');
     el.querySelectorAll('button[data-city-go]').forEach(b => b.onclick = () => this.goToCity(b.dataset.cityGo));
   }
 
   goToCity(id) {
-    const city = CITIES.find(c => c.id === id);
+    const city = this.cities().find(c => c.id === id);
     if (!city || !this.cityReachable(city)) return;
     audio.sfx('select');
     if (this.cityOpen(id)) {
@@ -1549,7 +1649,7 @@ class Game {
   spawnSpots(map, minDist = 6) {
     const cands = [];
     for (let y = 0; y < map.h; y++) for (let x = 0; x < map.w; x++) {
-      if ('wtx'.includes(map.terrain[y][x])) continue;
+      if ('wtxp'.includes(map.terrain[y][x])) continue;
       const d = Math.min(...map.deploy.map(p => Math.abs(p[0] - x) + Math.abs(p[1] - y)));
       if (d >= minDist) cands.push({ x, y, d });
     }
@@ -1598,13 +1698,18 @@ class Game {
     const e = this.state.errands;
     const activeIds = new Set(e.active.map(a => a.id));
     e.offered = e.offered.filter(id => !activeIds.has(id));
-    let seed = (this.state.chapter * 7 + (this.state.victories || 0) * 3 + (this.state.trials || 0)) % ERRANDS.length;
-    for (let i = 0; e.offered.length < 2 && i < ERRANDS.length * 2; i++) {
-      const cand = ERRANDS[(seed + i) % ERRANDS.length].id;
+    const pool = this.errandPool();
+    let seed = (this.state.chapter * 7 + (this.state.victories || 0) * 3 + (this.state.trials || 0)) % pool.length;
+    e.offered = e.offered.filter(id => pool.some(x => x.id === id));
+    for (let i = 0; e.offered.length < 2 && i < pool.length * 2; i++) {
+      const cand = pool[(seed + i) % pool.length].id;
       if (!e.offered.includes(cand) && !activeIds.has(cand)) e.offered.push(cand);
     }
     return e.offered.map(id => ERRANDS.find(x => x.id === id));
   }
+
+  // The errands of this save's road: the first game's, or the Marches'.
+  errandPool() { const id = this.cam().id; return ERRANDS.filter(x => (x.camp || 'base') === id); }
 
   errandPay(spec) {
     const lvl = this.avgLevel();
@@ -1640,7 +1745,7 @@ class Game {
       u.gainJP(pay.jp);
       let found = null;
       if (Math.random() < spec.item) {
-        const pool = Object.keys(ITEMS).filter(id => sellable(id) && ITEMS[id].tier <= this.shopTier() && ITEMS[id].tier >= Math.max(0, this.shopTier() - 2));
+        const pool = Object.keys(ITEMS).filter(id => sellable(id) && this.wagonCarries(id) && ITEMS[id].tier <= this.shopTier() && ITEMS[id].tier >= Math.max(0, this.shopTier() - 2));
         if (pool.length) { found = pool[Math.floor(Math.random() * pool.length)]; this.invAdd(found); }
       }
       e.reports.push(`${u.name} returns from "${spec.title}": ${pay.gil} marks and ${pay.jp} SP as a ${u.jobData.name}${found ? `, and brings back a ${ITEMS[found].name}` : ''}.`);
@@ -1742,7 +1847,7 @@ class Game {
 
   shopBuyRows() {
     const tier = this.shopTier();
-    const stock = Object.keys(ITEMS).filter(id => sellable(id) && ITEMS[id].tier <= tier);
+    const stock = Object.keys(ITEMS).filter(id => sellable(id) && this.wagonCarries(id) && ITEMS[id].tier <= tier);
     const bySlot = {};
     for (const id of stock) (bySlot[ITEMS[id].slot] = bySlot[ITEMS[id].slot] || []).push(id);
     return Object.entries(CATEGORY_NAMES).filter(([slot]) => bySlot[slot]).map(([slot, label]) => {
@@ -1856,7 +1961,7 @@ class Game {
   rollLoot(guaranteed) {
     if (!guaranteed && Math.random() > 0.4) return null;
     const tier = this.shopTier();
-    const pool = Object.keys(ITEMS).filter(id => sellable(id) && ITEMS[id].tier <= tier);
+    const pool = Object.keys(ITEMS).filter(id => sellable(id) && this.wagonCarries(id) && ITEMS[id].tier <= tier);
     if (!pool.length) return null;
     const id = pool[Math.floor(Math.random() * pool.length)];
     this.invAdd(id);
@@ -1875,7 +1980,7 @@ class Game {
     if (this._cast[name] !== undefined) return this._cast[name];
     let u = (this.state && this.state.party.find(p => p.name === name)) || null;
     if (!u && this.state) { const ex = (this.state.exiled || []).find(p => p.name === name); if (ex) u = Unit.fromSave(Object.assign({ team: 'player' }, ex)); }
-    if (!u) { const ch = CAMPAIGN.find(c => c.recruit && c.recruit.name === name); if (ch) u = new Unit({ name, job: ch.recruit.job, level: ch.recruit.level, team: 'player' }); }
+    if (!u) { const ch = ALL_CHAPTERS.find(c => c.recruit && c.recruit.name === name); if (ch) u = new Unit({ name, job: ch.recruit.job, level: ch.recruit.level, team: 'player' }); }
     if (!u) { const p = STARTING_PARTY.find(p => p.name === name); if (p) u = new Unit(Object.assign({ team: 'player' }, p)); }
     // A face found in the party is not cached: the party changes.
     if (!(this.state && this.state.party.includes(u))) this._cast[name] = u;
@@ -1892,7 +1997,7 @@ class Game {
   }
   // Who a narrative line is about: the first of the cast it names.
   castNamed(text) {
-    const names = new Set([...(this.state ? this.state.party.map(u => u.name) : []), ...STARTING_PARTY.map(p => p.name), ...CAMPAIGN.filter(c => c.recruit).map(c => c.recruit.name)]);
+    const names = new Set([...(this.state ? this.state.party.map(u => u.name) : []), ...STARTING_PARTY.map(p => p.name), ...ALL_CHAPTERS.filter(c => c.recruit).map(c => c.recruit.name)]);
     const m = String(text).match(/[A-Z][a-z]+/g) || [];
     return m.find(n => names.has(n) && this.castUnit(n)) || null;
   }
@@ -1975,13 +2080,14 @@ class Game {
     const s = this.state;
     const seed = (s.victories * 7919 + n * 104729) >>> 0;
     const rnd = (k) => ((seed * (k + 1) * 2654435761) >>> 0) / 4294967296;
-    const mapIds = Object.keys(MAPS);
+    const mapIds = this.mapPool();
     const map = mapIds[Math.floor(rnd(1) * mapIds.length)];
-    const pool = TRAINING_POOL[Math.min(TRAINING_POOL.length - 1, 4 + Math.floor(n / 2))];
+    const pools = this.cam().training;
+    const pool = pools[Math.min(pools.length - 1, Math.floor(pools.length / 6) + Math.floor(n / 2))];
     const count = Math.min(7, pool.length + Math.floor((n - 1) / 3));
     const jobs = []; for (let i = 0; i < count; i++) jobs.push(pool[Math.floor(rnd(10 + i) * pool.length)]);
     const level = this.avgLevel() + 1 + Math.floor(n / 2);
-    const titles = ['Echoes of the War', 'The Road Not Taken', 'Old Debts', 'A Rumour of Banners', 'Ghosts of Thornwall',
+    const titles = this.cam().trialTitles || ['Echoes of the War', 'The Road Not Taken', 'Old Debts', 'A Rumour of Banners', 'Ghosts of Thornwall',
                     'The Long Watch', 'Hired Steel', 'What the Marsh Kept', 'The Last Company', 'No Crown but Ours', 'Salt on the Wind', 'What the Sea Kept'];
     return { map, jobs, level, enemies: jobs, gil: 400 + 120 * n, title: titles[(n - 1) % titles.length] };
   }
@@ -2037,12 +2143,14 @@ class Game {
       c.beginPath(); c.moveTo(wx - 7, wy); c.quadraticCurveTo(wx - 3, wy - 4, wx, wy); c.quadraticCurveTo(wx + 3, wy + 4, wx + 7, wy); c.stroke();
     }
     c.restore();
-    const pts = WORLD_ROUTE.map(([fx, fy]) => ({ x: fx * W, y: fy * H }));
-    // Five roads leave the capital, two stops each, fanned out around it.
-    // The chosen road's stops join the route; the others are drawn faint.
+    const cam = this.cam(), ROADS = cam.roads, COMMON = cam.chapters.length;
+    const pts = cam.route.map(([fx, fy]) => ({ x: fx * W, y: fy * H }));
+    // Five roads leave the capital (three answers leave the tower), two
+    // stops each, fanned out around it. The chosen road's stops join the
+    // route; the others are drawn faint.
     const cap = pts[COMMON - 1];
-    const spurOf = (k) => { const a = -Math.PI / 2 + (k - 2) * (Math.PI / 3.2); return [1, 2].map(n => ({ x: cap.x + Math.cos(a) * 0.10 * W * n, y: cap.y + Math.sin(a) * 0.13 * H * n })); };
-    const spurs = ROAD_ORDER.map((id, k) => ({ id, stops: spurOf(k) }));
+    const spurOf = (k) => { const a = cam.spurAngle(k); return [1, 2].map(n => ({ x: cap.x + Math.cos(a) * 0.10 * W * n, y: cap.y + Math.sin(a) * 0.13 * H * n })); };
+    const spurs = cam.roadOrder.map((id, k) => ({ id, stops: spurOf(k) }));
     const chosen = spurs.find(sp => sp.id === this.state.branch);
     if (chosen) pts.push(...chosen.stops);
     const stopsAll = [];
@@ -2086,7 +2194,7 @@ class Game {
       obstacles.push({ x: p.x - 10, y: p.y - (done ? 15 : 10), w: 20, h: done ? 26 : 20 });
     });
     // Cities: a walled square on the road, gold once open, red while held.
-    const cityPts = CITIES.filter(c => this.cityReachable(c)).map(c => ({ c, x: c.pos[0] * W, y: c.pos[1] * H }));
+    const cityPts = this.cities().filter(c => this.cityReachable(c)).map(c => ({ c, x: c.pos[0] * W, y: c.pos[1] * H }));
     for (const { c: city, x, y } of cityPts) {
       const open = this.cityOpen(city.id);
       c.save(); c.translate(x, y);
@@ -2214,11 +2322,14 @@ class Game {
     // store, it is never true, and nothing here changes. A battle already
     // begun and taken up again (resume) is never gated: it was started
     // fairly, and it finishes.
-    if (!resume && window.Billing && Billing.locksChapter(this.state.chapter)) { this.openUnlock(); return; }
+    if (!resume && window.Billing && !this.state.campaign && Billing.locksChapter(this.state.chapter)) { this.openUnlock(); return; }
     if (!resume) await this.story(ch.title, ch.intro);
+    // Mirrorwater: the company fights its own reflection, made at the
+    // moment the field is set from whoever is marching.
+    const enemies = ch.mirror ? this.mirrorEnemies(ch) : ch.enemies;
     // Experience and SP are earned even in a losing battle, so the run is
     // saved either way rather than letting a defeat quietly discard it.
-    await this.battleFlow(MAPS[ch.map], ch.enemies, ch.gil, Object.assign({ objective: ch.objective, talk: ch.talk, kind: 'chapter', flow: { kind: 'chapter', index: this.state.chapter } }, resume || {}), async (result) => {
+    await this.battleFlow(MAPS[ch.map], enemies, ch.gil, Object.assign({ objective: ch.objective, talk: ch.talk, kind: 'chapter', flow: { kind: 'chapter', index: this.state.chapter } }, resume || {}), async (result) => {
       if (result !== 'victory') return;
       // The road ahead is walked when the camp next shows: from here to there.
       this.travel = { from: this.state.chapter, to: this.state.chapter + 1 };
@@ -2238,6 +2349,23 @@ class Game {
     });
   }
 
+  /* The glass remembers: the chapter's placeholder foes become copies of
+     the first five of the company who are not away, in the same trades,
+     at the same level, wearing the same arms and passives, standing where
+     the chapter put its placeholders. A smaller company meets fewer. */
+  mirrorEnemies(ch) {
+    const roster = this.state.party.filter(u => !this.errandOf(u) && !u.pet).slice(0, 5);
+    const spots = ch.enemies;
+    const out = roster.map((u, i) => ({
+      job: u.job, level: Math.max(1, u.level), x: spots[i % spots.length].x, y: spots[i % spots.length].y,
+      name: `Mirror ${u.name}`.slice(0, 24), gear: Object.assign({}, u.gear),
+      passives: Object.values(u.passives).filter(Boolean),
+    }));
+    // The glass never shows fewer than three, whoever marches.
+    for (let i = out.length; i < Math.min(3, spots.length); i++) out.push(Object.assign({}, spots[i]));
+    return out;
+  }
+
   // ---- the unlock (Play edition) ---------------------------------------------------------
   // The camp's Options card exists only while the store is present and the
   // game is not yet owned; it is hidden everywhere else, so most players
@@ -2247,33 +2375,43 @@ class Game {
     card.hidden = !(window.Billing && Billing.armed() && !Billing.owned());
   }
 
-  openUnlock() { this._unlockMsg = ''; this.renderUnlock(); this.showScreen('unlock'); }
+  // The unlock screen sells one of two things: the full game, or the
+  // Hollow Sky. Which one is remembered until the screen is left.
+  openUnlock(which) { this._unlockWhich = which === 'expansion' ? 'expansion' : 'full'; this._unlockMsg = ''; this.renderUnlock(); this.showScreen('unlock'); }
 
   renderUnlock() {
     if (!window.Billing) return;
-    const d = Billing.itemDetails();
-    if (d.title) $('unlock-title').textContent = d.title;
-    $('unlock-price').textContent = Billing.priceText();
-    const ownedNow = Billing.owned();
+    const which = this._unlockWhich || 'full', exp = which === 'expansion';
+    const d = Billing.itemDetails(which);
+    $('unlock-title').textContent = d.title || (exp ? 'The Hollow Sky' : tr('Unlock the full game'));
+    document.body.dataset.unlock = which;
+    $('unlock-price').textContent = Billing.priceText(which);
+    const ownedNow = Billing.owned(which);
     $('unlock-owned').hidden = !ownedNow;
     $('unlock-buy-row').hidden = ownedNow;
+    // The screen's fixed words are the full game's; the expansion borrows the screen and says its own.
+    const ownedP = document.querySelector('#unlock-owned p'), note = document.querySelector('#screen-unlock .unlock-note');
+    if (ownedP) ownedP.textContent = exp ? 'The Hollow Sky is unlocked on this account. The road east is yours.' : tr('The full game is unlocked on this account. The road is yours.');
+    if (note) note.textContent = exp ? 'A second campaign for a company that has finished the first, or a veteran company begun from the title: sixteen chapters, three answers, four trades, five towns. Your saves and the first game are untouched either way.'
+      : tr('Your company, your saves and everything the demo earned carry over — the same campaign, with the gate open. The demo itself stays playable: camp, training, the shop, the cities you have opened, and every field you have won.');
     $('unlock-msg').textContent = this._unlockMsg || (Billing.pending() && !ownedNow
       ? tr('A purchase is waiting on Google Play to confirm it. When it clears, Restore Purchase will find it — and it is checked again on every launch.')
       : '');
     const busy = !!this._unlockBusy;
     $('btn-unlock-buy').disabled = busy;
     $('btn-unlock-restore').disabled = busy;
-    $('btn-unlock-buy').textContent = busy ? tr('Asking Google Play…') : tr('Unlock the full game — {price}', { price: Billing.priceText() });
+    $('btn-unlock-buy').textContent = busy ? tr('Asking Google Play…') : exp ? tr('Unlock The Hollow Sky — {price}', { price: Billing.priceText(which) }) : tr('Unlock the full game — {price}', { price: Billing.priceText() });
   }
 
   async buyUnlock() {
     if (this._unlockBusy || !window.Billing) return;
+    const which = this._unlockWhich || 'full';
     this._unlockBusy = true; this.renderUnlock();
-    const r = await Billing.buy();
+    const r = await Billing.buy(which);
     this._unlockBusy = false;
     if (r.status === 'owned') {
       this._unlockMsg = '';
-      this.toast(tr('The full game is unlocked. The road is yours.'));
+      this.toast(which === 'expansion' ? tr('The Hollow Sky is unlocked. The road east is yours.') : tr('The full game is unlocked. The road is yours.'));
       if (this.state) this.showWorld(); else this.showScreen('title');
       return;
     }
@@ -2287,17 +2425,19 @@ class Game {
 
   async restoreUnlock() {
     if (this._unlockBusy || !window.Billing) return;
+    const which = this._unlockWhich || 'full';
     this._unlockBusy = true; this.renderUnlock();
-    const has = await Billing.restore();
+    const has = await Billing.restore(which);
     this._unlockBusy = false;
     if (has) {
       this._unlockMsg = '';
-      this.toast(tr('Purchase restored. The full game is unlocked.'));
+      this.toast(which === 'expansion' ? tr('Purchase restored. The Hollow Sky is unlocked.') : tr('Purchase restored. The full game is unlocked.'));
       if (this.state) this.showWorld(); else this.showScreen('title');
       return;
     }
-    this._unlockMsg = Billing.pending()
+    this._unlockMsg = Billing.pending(which)
       ? tr('Still waiting on Google Play to confirm the earlier payment. It is checked again on every launch.')
+      : which === 'expansion' ? tr('Google Play shows no purchase of The Hollow Sky for this account. If you bought it under another account, restore from there.')
       : tr('Google Play shows no purchase of the full game for this account. If you bought it under another account, restore from there.');
     this.renderUnlock();
   }
@@ -2305,9 +2445,10 @@ class Game {
   // ---- the five roads --------------------------------------------------------------------
   openChoice() {
     const s = this.state;
+    const cam = this.cam(), CHOICE = cam.choice, ROADS = cam.roads;
     $('choice-title').textContent = CHOICE.title;
     $('choice-text').innerHTML = CHOICE.lines.map(l => `<p>${l}</p>`).join('');
-    $('choice-list').innerHTML = ROAD_ORDER.map(id => {
+    $('choice-list').innerHTML = cam.roadOrder.map(id => {
       const r = ROADS[id], seen = s.endings && s.endings[id];
       return `<div class="road ${seen ? 'seen' : ''}" data-road="${id}" tabindex="0" role="button">
         <div class="road-head"><b>${r.title}</b> <span class="road-tag">${r.tagline}</span>${seen ? '<span class="road-seen">ending seen</span>' : ''}</div>
@@ -2321,8 +2462,9 @@ class Game {
   }
 
   async chooseRoad(id) {
-    const r = ROADS[id]; if (!r || !this.atFork()) return;
-    const leaving = id === 'iron' ? this.state.party.filter(u => IRON_REFUSERS.includes(u.name)) : [];
+    const cam = this.cam(), r = cam.roads[id]; if (!r || !this.atFork()) return;
+    const refusers = (cam.refusers || {})[id] || [];
+    const leaving = refusers.length ? this.state.party.filter(u => refusers.includes(u.name)) : [];
     const warn = leaving.length ? ` ${leaving.map(u => u.name).join(', ')} will not follow.` : '';
     if (!(await this.ask(`Take ${r.title}? ${r.tagline}${warn} The other roads close behind you until this one is walked to its end.`, { yes: 'Take this road' }))) return;
     if (!this.atFork()) return;
@@ -2344,9 +2486,11 @@ class Game {
   async anotherRoad() {
     const s = this.state;
     if (!s.branch) return;
-    if (!(await this.ask('Return to the capital and choose another road? The party keeps everything it has. Anyone who left the company comes back.', { yes: 'Return' }))) return;
+    const q = this.cam().id === 'base' ? 'Return to the capital and choose another road? The party keeps everything it has. Anyone who left the company comes back.'
+      : 'Return to the top of the tower and give another answer? The party keeps everything it has.';
+    if (!(await this.ask(q, { yes: 'Return' }))) return;
     if (!s.branch) return;
-    s.chapter = COMMON;
+    s.chapter = this.common();
     s.branch = null;
     for (const saved of s.exiled || []) if (!s.party.some(u => u.name === saved.name)) s.party.push(Unit.fromSave(Object.assign({ team: 'player' }, saved)));
     s.exiled = [];
@@ -2362,16 +2506,24 @@ class Game {
     if (!ch || i >= this.state.chapter) return;
     if (!(await this.ask(`Revisit ${ch.title}? The same foes, half the pay, and nothing in the story changes.`, { yes: 'Revisit' }))) return;
     const floor = this.avgLevel() - 1;
-    const enemies = ch.enemies.map(e => Object.assign({}, e, { level: Math.max(e.level, floor) }));
+    const enemies = (ch.mirror ? this.mirrorEnemies(ch) : ch.enemies).map(e => Object.assign({}, e, { level: Math.max(e.level, floor) }));
     await this.battleFlow(MAPS[ch.map], enemies, Math.floor(ch.gil / 2), { objective: ch.objective, flow: { kind: 'revisit', index: i } });
+  }
+
+  // The fields of this save's campaign: the Marches' for the Hollow Sky,
+  // the first game's otherwise, less the few a campaign keeps for its story.
+  mapPool(forTraining) {
+    const cam = this.cam(), hollow = typeof MAPS_HOLLOW !== 'undefined' ? MAPS_HOLLOW : {};
+    return Object.keys(MAPS).filter(m => (cam.id === 'hollowsky') === !!hollow[m] && !(forTraining && (cam.noTraining || []).includes(m)));
   }
 
   async startTraining() {
     const s = this.state;
-    const mapIds = Object.keys(MAPS).filter(m => !['thornwall', 'brassgate', 'starfall'].includes(m));
+    const mapIds = this.mapPool(true);
     const map = MAPS[mapIds[Math.floor(Math.random() * mapIds.length)]];
-    const poolIdx = Math.min(TRAINING_POOL.length - 1, Math.floor(Math.random() * (s.chapter + 1)));
-    const pool = TRAINING_POOL[poolIdx];
+    const pools = this.cam().training;
+    const poolIdx = Math.min(pools.length - 1, Math.floor(Math.random() * (s.chapter + 1)));
+    const pool = pools[poolIdx];
     const lvl = Math.max(1, this.avgLevel() + Math.floor(Math.random() * 2) - 1);
     const cands = this.spawnSpots(map);
     const enemies = pool.map((job, i) => ({ job, level: lvl, x: cands[i % cands.length].x, y: cands[i % cands.length].y }));

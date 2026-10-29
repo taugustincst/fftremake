@@ -12,7 +12,8 @@ code the browser runs.
 | `node tools/test-elements.js` | Elemental affinities: weakness, resistance, absorption, immunity, prediction and AI awareness. |
 | `node tools/test-statuses.js` | Silence, Blind and Berserk, the gear that wards them off and the abilities that lift them. |
 | `node tools/test-boss.js` | The final battle's second shape and the difficulty it produces. |
-| `node tools/simulate.js [runs] [training] [retries]` | Plays whole campaigns with the AI on both sides, retrying a lost chapter as a player would, and reports the difficulty curve. |
+| `node tools/simulate.js [runs] [training] [retries] [campaign]` | Plays whole campaigns with the AI on both sides, retrying a lost chapter as a player would, and reports the difficulty curve. `hollowsky` as the fourth argument plays the expansion with its veteran company. |
+| `node tools/make-maps-hollow.js` | Rebuilds `js/maps2.js`, the Hollow Sky's twenty-seven fields, from the specs at the top of the file: a lie of the land, a few features and a seed, with every field proved walkable from its deployment. |
 | `node tools/make-icons.js` | Redraws every app icon, web and Android, from the game's own sprites. Shares the game's palette resolution, so icons carry the same shading. |
 | `node tools/bundle.js [--body]` | Packs the stylesheet, all nine scripts and the icons into one self-contained page in `dist/`. The plain form is a complete HTML file that plays off a filesystem; `--body` omits the document shell for a host that supplies its own. |
 | `node tools/itch.js` | Rebuilds the single-file page and packs it as `dist/chronicles-of-elderon-itch.zip`, `index.html` at the root, which is what itch.io's HTML5 uploader takes. No dependency: the zip is written by hand. |

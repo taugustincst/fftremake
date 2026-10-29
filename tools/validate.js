@@ -7,6 +7,7 @@
 const { load } = require('./load');
 const g = load();
 const problems = [];
+const CAMPAIGNS_ALL = g.run('typeof CAMPAIGNS === "undefined" ? null : Object.values(CAMPAIGNS)') || [{ chapters: g.CAMPAIGN, roads: g.run('typeof ROADS === "undefined" ? {} : ROADS') }];
 const bad = (msg) => problems.push(msg);
 
 // ---- maps ----
@@ -16,12 +17,12 @@ for (const [id, m] of Object.entries(g.MAPS)) {
   m.heights.forEach((r, y) => { if (r.length !== m.w) bad(`${id}: height row ${y} is ${r.length} wide, expected ${m.w}`); });
   m.terrain.forEach((r, y) => {
     if (r.length !== m.w) bad(`${id}: terrain row ${y} is ${r.length} wide, expected ${m.w}`);
-    for (const ch of r) if (!'gdsbwtxnir'.includes(ch)) bad(`${id}: unknown terrain '${ch}' in row ${y}`);
+    for (const ch of r) if (!'gdsbwtxnirp'.includes(ch)) bad(`${id}: unknown terrain '${ch}' in row ${y}`);
   });
   if (!m.deploy || !m.deploy.length) bad(`${id}: no deployment anchors`);
   for (const [x, y] of m.deploy || []) {
     if (x >= m.w || y >= m.h) bad(`${id}: deploy anchor ${x},${y} is off the map`);
-    else if ('wtx'.includes(m.terrain[y][x])) bad(`${id}: deploy anchor ${x},${y} is impassable`);
+    else if ('wtxp'.includes(m.terrain[y][x])) bad(`${id}: deploy anchor ${x},${y} is impassable`);
   }
 }
 
@@ -57,7 +58,7 @@ for (const [id, it] of Object.entries(g.ITEMS)) {
 }
 // ---- item icons: every item and every one of the apothecary's items draws one ----
 {
-  const gi = load(['data', 'color', 'icons']);
+  const gi = load(['data', 'data2', 'color', 'icons']);
   for (const [kind, rows] of Object.entries(gi.ICON_GLYPHS)) {
     if (rows.length > gi.ICON_SIZE) bad(`icon glyph ${kind} has ${rows.length} rows, more than ${gi.ICON_SIZE}`);
     rows.forEach((r, y) => {
@@ -84,15 +85,24 @@ for (const [id, p] of Object.entries(g.PETS)) {
   if (!(p.price > 0)) bad(`beast ${id} has no kennel price`);
   if (!p.desc) bad(`beast ${id} has no description`);
 }
-for (const c of g.run('typeof CITIES === "undefined" ? [] : CITIES')) {
+// Every campaign's cities: the first game's and the Marches'.
+const CITIES_ALL = g.run('typeof CAMPAIGNS === "undefined" ? (typeof CITIES === "undefined" ? [] : CITIES) : Object.values(CAMPAIGNS).flatMap(c => c.cities)');
+for (const c of CITIES_ALL) {
   for (const j of c.pets || []) if (!g.PETS[j]) bad(`city ${c.id} kennels an unknown beast '${j}'`);
+  for (const j of c.hires || []) if (!g.JOBS[j]) bad(`city ${c.id} hires an unknown trade '${j}'`);
+  for (const id of c.stock || []) if (!g.ITEMS[id]) bad(`city ${c.id} sells an unknown item '${id}'`);
+  if (!g.MAPS[c.map]) bad(`city ${c.id} is fought on unknown map '${c.map}'`);
+  for (const e of c.enemies || []) if (!g.JOBS[e.job]) bad(`city ${c.id} is held by unknown job '${e.job}'`);
 }
+const cityIds = CITIES_ALL.map(c => c.id);
+if (new Set(cityIds).size !== cityIds.length) bad('two cities share an id');
 if (!Object.values(g.ABILITIES).some(ab => ab.effects.some(e => e.type === 'tame'))) bad('no ability tames');
 
-const CITY_IDS = g.run('typeof CITIES === "undefined" ? [] : CITIES.map(c => c.id)');
+const CITY_IDS = cityIds;
 // A recipe or material is merged into ITEMS after the literal, so an id used
-// twice would quietly replace a wagon item rather than fail to parse.
-const dataSrc = require('fs').readFileSync(require('path').join(__dirname, '..', 'js', 'data.js'), 'utf8');
+// twice would quietly replace a wagon item rather than fail to parse. The
+// expansion's tables are merged the same way, so its file is scanned too.
+const dataSrc = ['data.js', 'data2.js'].map(f => require('fs').readFileSync(require('path').join(__dirname, '..', 'js', f), 'utf8')).join('\n');
 for (const id of [...Object.keys(g.FORGE_ITEMS), ...Object.keys(g.MATERIALS)]) {
   const n = (dataSrc.match(new RegExp(`^  ${id}: `, 'gm')) || []).length;
   if (n !== 1) bad(`item id ${id} is defined ${n} times; a forge recipe or material must not reuse a wagon item's id`);
@@ -163,8 +173,18 @@ for (const n of named) bad(`name lifted from another game: ${n}`);
 }
 
 // ---- campaign ----
-const ROADS = g.run('typeof ROADS === "undefined" ? {} : ROADS');
-const ALL_CHAPTERS = [...g.CAMPAIGN, ...Object.values(ROADS).flatMap(r => r.chapters)];
+const ALL_CHAPTERS = CAMPAIGNS_ALL.flatMap(c => [...c.chapters, ...Object.values(c.roads).flatMap(r => r.chapters)]);
+// Chapter ids are keys in the records and must not repeat anywhere.
+{ const ids = ALL_CHAPTERS.map(c => c.id); if (new Set(ids).size !== ids.length) bad('two chapters share an id'); }
+// Every campaign's acts cover its common chapters, its roads end in an ending, and its route has a stop per chapter.
+for (const c of CAMPAIGNS_ALL) {
+  if (!c.acts || !c.route) continue;
+  if (c.route.length !== c.chapters.length) bad(`campaign ${c.id}: ${c.route.length} map stops for ${c.chapters.length} chapters`);
+  for (let i = 0; i < c.chapters.length; i++) if (!c.acts.some(a => i >= a.from && i <= a.to)) bad(`campaign ${c.id}: chapter ${i} is in no act`);
+  for (const id of c.roadOrder || []) { const r = c.roads[id]; if (!r) { bad(`campaign ${c.id}: road order names unknown road '${id}'`); continue; } const last = r.chapters[r.chapters.length - 1]; if (!last.final || !last.ending || !last.ending.title) bad(`campaign ${c.id}: road ${id} does not end in an ending`); }
+  for (const city of c.cities || []) if (city.from > c.chapters.length) bad(`campaign ${c.id}: city ${city.id} opens after the road ends`);
+  for (const ch of c.chapters) if (ch.recruit && !g.JOBS[ch.recruit.job]) bad(`${ch.id}: recruit has unknown job '${ch.recruit.job}'`);
+}
 for (const ch of ALL_CHAPTERS) {
   const m = g.MAPS[ch.map];
   if (!m) { bad(`${ch.id}: unknown map '${ch.map}'`); continue; }
@@ -173,7 +193,7 @@ for (const ch of ALL_CHAPTERS) {
   for (const e of ch.enemies) {
     if (!g.JOBS[e.job]) bad(`${ch.id}: unknown enemy job '${e.job}'`);
     if (e.x >= m.w || e.y >= m.h) bad(`${ch.id}: enemy at ${e.x},${e.y} is off the map`);
-    else if ('wtx'.includes(m.terrain[e.y][e.x])) bad(`${ch.id}: enemy at ${e.x},${e.y} stands on impassable ground`);
+    else if ('wtxp'.includes(m.terrain[e.y][e.x])) bad(`${ch.id}: enemy at ${e.x},${e.y} stands on impassable ground`);
     const key = `${e.x},${e.y}`;
     if (seen.has(key)) bad(`${ch.id}: two enemies share tile ${key}`);
     seen.add(key);
@@ -250,11 +270,17 @@ for (const ch of ALL_CHAPTERS) {
 for (const p of g.STARTING_PARTY) if (!g.JOBS[p.job]) bad(`starting party member ${p.name} has unknown job '${p.job}'`);
 if (!g.STARTING_PARTY.some(p => p.leader)) bad('the starting party has no leader');
 // Everyone who joins through the story has words for their first kill.
-for (const name of [...g.STARTING_PARTY.map(p => p.name), ...g.CAMPAIGN.filter(c => c.recruit).map(c => c.recruit.name)]) {
+const RECRUITS_ALL = g.run('typeof CAMPAIGNS === "undefined" ? CAMPAIGN : Object.values(CAMPAIGNS).flatMap(c => c.chapters)').filter(c => c.recruit).map(c => c.recruit.name);
+for (const name of [...g.STARTING_PARTY.map(p => p.name), ...RECRUITS_ALL]) {
   if (!(g.FIRST_BLOOD[name] && g.FIRST_BLOOD[name].length <= 120)) bad(`${name} has no first-blood line`);
 }
 for (const name of Object.keys(g.FIRST_BLOOD)) {
-  if (!g.STARTING_PARTY.some(p => p.name === name) && !g.CAMPAIGN.some(c => c.recruit && c.recruit.name === name)) bad(`first-blood line for '${name}', who never joins`);
+  if (!g.STARTING_PARTY.some(p => p.name === name) && !RECRUITS_ALL.includes(name)) bad(`first-blood line for '${name}', who never joins`);
+}
+// The expansion's own training pools and veteran company.
+for (const c of CAMPAIGNS_ALL) {
+  for (const pool of c.training || []) for (const j of pool) if (!g.JOBS[j]) bad(`campaign ${c.id}: training pool names unknown job '${j}'`);
+  for (const p of c.party || []) if (!g.JOBS[p.job]) bad(`campaign ${c.id}: starting party member ${p.name} has unknown job '${p.job}'`);
 }
 for (const pool of g.TRAINING_POOL) for (const j of pool) if (!g.JOBS[j]) bad(`training pool names unknown job '${j}'`);
 
@@ -270,5 +296,5 @@ console.log([
   `${Object.keys(g.ABILITIES).length} abilities,`,
   `${Object.keys(g.PASSIVES).length} passives,`,
   `${Object.keys(g.ITEMS).length} items,`,
-  `${g.CAMPAIGN.length} chapters, ${Object.keys(ROADS).length} roads`,
+  `${ALL_CHAPTERS.length} chapters, ${CAMPAIGNS_ALL.reduce((a, c) => a + Object.keys(c.roads).length, 0)} roads`,
 ].join(' '));

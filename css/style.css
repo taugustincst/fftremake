@@ -651,3 +651,10 @@ button.icon { min-width: 34px; padding: 4px 8px; font-size: 14px; line-height: 1
   #battle-top { flex-wrap: wrap; justify-content: center; row-gap: 3px; }
   #battle-name { max-width: 100%; flex-basis: 100%; text-align: center; }
 }
+
+/* The Hollow Sky: the way east on the road card, and the expansion's button on the title. */
+.hollow-row { border-top: 1px solid rgba(158,192,255,0.25); padding-top: 0.5rem; margin-top: 0.4rem; color: #cfd8ea; }
+.hollow-row b { color: #cfe0ff; }
+.title-expansion { display: flex; flex-direction: column; align-items: center; gap: 0.1rem; margin: 0.6rem auto 0; padding: 0.5rem 1.1rem; background: linear-gradient(180deg, rgba(60,40,100,0.75), rgba(20,12,40,0.85)); border: 1px solid rgba(190,160,255,0.45); }
+.title-expansion-name { font-family: Cinzel, serif; letter-spacing: 0.08em; font-size: 1.05rem; color: #e6dcff; }
+.title-expansion small { color: #b8b0d0; font-size: 0.72rem; }

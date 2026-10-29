@@ -222,6 +222,7 @@ class Unit {
   wardsOff(id) {
     if ((id === 'slow' || id === 'stop') && this.hasPassive('ironFooting')) return true;
     if ((id === 'silence' || id === 'stop') && this.hasPassive('ironWill')) return true;
+    if ((id === 'blind' || id === 'silence' || id === 'berserk') && this.hasPassive('lampLight')) return true;
     for (const slot of Object.keys(SLOT_NAMES)) {
       const it = this.equipped(slot);
       if (it && it.wards && it.wards.includes(id)) return true;
@@ -334,6 +335,9 @@ function makeEnemy(spec, difficulty) {
   // and the late ones still have something held back.
   const frac = spec.boss ? 1 : Math.min(0.9, 0.15 + level * 0.03);
   u.autoLearn(frac);
+  // A boss knows its whole trade but never the part that takes it off the
+  // field itself: a fight for the commander is not won by its own Go Home.
+  if (spec.boss) for (const id of Object.keys(u.learned)) if (ABILITIES[id] && ABILITIES[id].suicide) delete u.learned[id];
   // From the middle of the campaign on, foes bring passives of their own. A spec
   // may name them outright; otherwise they come from the job's own teachings.
   const slots = spec.boss ? 3 : Math.min(3, Math.floor(level / 3));

@@ -34,6 +34,10 @@
 const Billing = (() => {
   const PLAY_STORE = 'https://play.google.com/billing';
   const SKU = 'full_unlock';
+  // The expansion is a second product, gated the same way: only where
+  // Play answers for it, never on the open web.
+  const SKU_EXP = 'hollow_sky';
+  const SKUS = { full: SKU, expansion: SKU_EXP };
   // Chapters 0..4 are the demo: five battles, three recruits, and the
   // cliffhanger at Dunmarch's gate. Index 5 (Ashen Ridge) is the first
   // chapter of the full game.
@@ -41,9 +45,14 @@ const Billing = (() => {
   const SEEN_KEY = 'elderon.store-seen';       // the Play store answered for our product once
   const OWNED_KEY = 'elderon.unlock';          // Play says the full game is owned
   const PENDING_KEY = 'elderon.unlock-pending'; // paid (or paying) but not yet confirmed by Play
+  const SEEN_EXP_KEY = 'elderon.store-seen-hollow';  // Play listed the expansion once
+  const OWNED_EXP_KEY = 'elderon.unlock-hollow';
+  const PENDING_EXP_KEY = 'elderon.unlock-hollow-pending';
   const SIM_KEY = 'elderon.store-sim';         // simulation scenario (tools/store-sim.html)
   const SIM_OWNED_KEY = 'elderon.store-sim-owned';
+  const SIM_OWNED_EXP_KEY = 'elderon.store-sim-owned-hollow';
   const FALLBACK_PRICE = { currency: 'USD', value: '8.99' };
+  const FALLBACK_PRICE_EXP = { currency: 'USD', value: '5.99' };
 
   // Storage, with the same caution as the game's own: it can be absent,
   // blocked or full, and none of that may break the game.
@@ -57,13 +66,16 @@ const Billing = (() => {
   let mode = 'unknown';       // 'unknown' | 'web' | 'play'
   let service = null;         // the Digital Goods service, once obtained
   let item = null;            // this product's details, as Play reports them
+  let itemExp = null;         // the expansion's
   let owned = store.get(OWNED_KEY) === '1';
   let pending = store.get(PENDING_KEY) === '1';
+  let ownedExp = store.get(OWNED_EXP_KEY) === '1';
+  let pendingExp = store.get(PENDING_EXP_KEY) === '1';
   let sim = null;             // { scenario } when simulating, else null
   let readyPromise = null;
 
   const api = {
-    SKU, DEMO_CHAPTERS, PLAY_STORE,
+    SKU, SKU_EXP, DEMO_CHAPTERS, PLAY_STORE,
     onChange: null,           // the game sets this; called whenever the answers change
     ready: null,              // a promise for the first detection settling
   };
@@ -96,34 +108,49 @@ const Billing = (() => {
       title: 'Chronicles of Elderon — Full Game',
       description: 'Unlocks the whole campaign beyond the demo.',
       price: { currency: 'USD', value: '8.99' },
+    }, {
+      itemId: SKU_EXP,
+      title: 'The Hollow Sky',
+      description: 'A second campaign east over the Greywall: four acts, three answers, four trades.',
+      price: { currency: 'USD', value: '5.99' },
     }];
     const isOwned = () => scenario === 'owned' || store.get(SIM_OWNED_KEY) === '1';
+    const isOwnedExp = () => scenario === 'owned' || scenario === 'owned-hollow' || store.get(SIM_OWNED_EXP_KEY) === '1';
     return {
       async getDetails(ids) { return details.filter(d => ids.includes(d.itemId)); },
-      async listPurchases() { return isOwned() ? [{ itemId: SKU, purchaseToken: 'sim-token' }] : []; },
+      async listPurchases() { const out = []; if (isOwned()) out.push({ itemId: SKU, purchaseToken: 'sim-token' }); if (isOwnedExp()) out.push({ itemId: SKU_EXP, purchaseToken: 'sim-token-hollow' }); return out; },
       async consume() { /* the unlock is never consumed */ },
     };
   }
 
   // What the simulated player does at the till, per scenario.
-  async function simBuy(scenario) {
+  async function simBuy(scenario, which) {
     await new Promise(r => setTimeout(r, 60));
     if (scenario === 'cancel') { const e = new Error('The simulated player closed the payment sheet.'); e.name = 'AbortError'; throw e; }
     if (scenario === 'error') throw new Error('Simulated store failure.');
     if (scenario === 'pending') return { purchaseToken: 'sim-token-pending' };
-    store.set(SIM_OWNED_KEY, '1');
-    return { purchaseToken: 'sim-token' };
+    store.set(which === 'expansion' ? SIM_OWNED_EXP_KEY : SIM_OWNED_KEY, '1');
+    return { purchaseToken: which === 'expansion' ? 'sim-token-hollow' : 'sim-token' };
   }
 
   // ---- entitlement ----------------------------------------------------------
-  function setOwned(v) {
+  function setOwned(v, which) {
+    if (which === 'expansion') {
+      if (ownedExp === v) { ownedExp = v; return; }
+      ownedExp = v;
+      if (v) { store.set(OWNED_EXP_KEY, '1'); setPending(false, which); }
+      else store.del(OWNED_EXP_KEY);
+      changed();
+      return;
+    }
     if (owned === v) { owned = v; return; }
     owned = v;
     if (v) { store.set(OWNED_KEY, '1'); setPending(false); }
     else store.del(OWNED_KEY);
     changed();
   }
-  function setPending(v) {
+  function setPending(v, which) {
+    if (which === 'expansion') { pendingExp = v; if (v) store.set(PENDING_EXP_KEY, '1'); else store.del(PENDING_EXP_KEY); return; }
     pending = v;
     if (v) store.set(PENDING_KEY, '1'); else store.del(PENDING_KEY);
   }
@@ -135,8 +162,11 @@ const Billing = (() => {
     if (!service) return owned;
     const purchases = await service.listPurchases();
     const has = Array.isArray(purchases) && purchases.some(p => p && p.itemId === SKU);
+    const hasExp = Array.isArray(purchases) && purchases.some(p => p && p.itemId === SKU_EXP);
     setOwned(has);
     if (has) setPending(false);
+    setOwned(hasExp, 'expansion');
+    if (hasExp) setPending(false, 'expansion');
     return owned;
   }
 
@@ -147,7 +177,10 @@ const Billing = (() => {
       if (scenario === 'nostore') { mode = 'web'; return api; }
       sim = { scenario };
       service = simService(scenario);
-      item = (await service.getDetails([SKU]))[0] || null;
+      const simDetails = await service.getDetails([SKU, SKU_EXP]);
+      item = simDetails.find(d => d.itemId === SKU) || null;
+      itemExp = simDetails.find(d => d.itemId === SKU_EXP) || null;
+      if (itemExp) store.set(SEEN_EXP_KEY, '1');
       mode = 'play';
       store.set(SEEN_KEY, '1');
       await refreshEntitlement();
@@ -161,9 +194,11 @@ const Billing = (() => {
       service = null; mode = 'web'; return api;
     }
     try {
-      const details = await service.getDetails([SKU]);
+      const details = await service.getDetails([SKU, SKU_EXP]);
       item = (details || []).find(d => d && d.itemId === SKU) || null;
-    } catch (e) { item = null; }
+      itemExp = (details || []).find(d => d && d.itemId === SKU_EXP) || null;
+      if (itemExp) store.set(SEEN_EXP_KEY, '1');
+    } catch (e) { item = null; itemExp = null; }
     if (item) {
       // Play answered for this app's own product: this is the Play
       // edition, and buying is possible, so the demo gate may arm.
@@ -198,22 +233,30 @@ const Billing = (() => {
   // The gate is armed wherever Play's store has answered for the product
   // (this launch, or a remembered earlier one) and the player has not
   // bought the full game.
-  api.armed = function () {
+  api.armed = function (which) {
+    if (which === 'expansion') { if (ownedExp) return false; return mode === 'play' || store.get(SEEN_KEY) === '1'; }
     if (owned) return false;
     return mode === 'play' || store.get(SEEN_KEY) === '1';
   };
   api.available = function () { return mode === 'play' && !!service; };
-  api.owned = function () { return owned; };
-  api.pending = function () { return pending; };
+  api.owned = function (which) { return which === 'expansion' ? ownedExp : owned; };
+  api.pending = function (which) { return which === 'expansion' ? pendingExp : pending; };
   // Does this chapter index belong to the full game, for this player,
   // in this edition? Resume of a battle already begun never asks.
   api.locksChapter = function (i) { return api.armed() && i >= DEMO_CHAPTERS; };
-  api.itemDetails = function () {
+  // Is the Hollow Sky shut, for this player, in this edition? Only where
+  // Play answers for it: a listing without the product never locks it.
+  api.locksExpansion = function () { return !ownedExp && (mode === 'play' ? !!itemExp : false) || (!ownedExp && mode !== 'play' && store.get(SEEN_EXP_KEY) === '1'); };
+  api.itemDetails = function (which) {
+    if (which === 'expansion') {
+      if (itemExp) return { title: itemExp.title || '', description: itemExp.description || '', price: itemExp.price || FALLBACK_PRICE_EXP };
+      return { title: '', description: '', price: FALLBACK_PRICE_EXP };
+    }
     if (item) return { title: item.title || '', description: item.description || '', price: item.price || FALLBACK_PRICE };
     return { title: '', description: '', price: FALLBACK_PRICE };
   };
-  api.priceText = function () {
-    const p = api.itemDetails().price;
+  api.priceText = function (which) {
+    const p = api.itemDetails(which).price;
     try {
       return new Intl.NumberFormat(typeof navigator !== 'undefined' ? navigator.language : 'en-US',
         { style: 'currency', currency: p.currency }).format(p.value);
@@ -226,20 +269,21 @@ const Billing = (() => {
   // payment methods do this; the entitlement arrives on a later launch
   // or Restore), 'cancelled' (the player closed the payment sheet),
   // 'unavailable' (no store here), 'error' (anything else, with .error).
-  api.buy = async function () {
+  api.buy = async function (which) {
     await api.init();
-    if (owned) return { status: 'owned' };
+    const exp = which === 'expansion';
+    if (exp ? ownedExp : owned) return { status: 'owned' };
     if (!service) return { status: 'unavailable' };
     try {
       let token = null;
       if (sim) {
-        const r = await simBuy(sim.scenario);
+        const r = await simBuy(sim.scenario, which);
         token = r && r.purchaseToken;
       } else {
         const w = window;
-        const details = api.itemDetails();
+        const details = api.itemDetails(which);
         const request = new w.PaymentRequest(
-          [{ supportedMethods: PLAY_STORE, data: { sku: SKU } }],
+          [{ supportedMethods: PLAY_STORE, data: { sku: SKUS[which] || SKU } }],
           { total: { label: 'Total', amount: { currency: details.price.currency, value: String(details.price.value) } } }
         );
         const response = await request.show();
@@ -250,8 +294,8 @@ const Billing = (() => {
       // through; the entitlement list is the proof we keep. If it is not
       // there yet, the payment is pending with Play, not lost.
       try { await refreshEntitlement(); } catch (e) { /* asked again on Restore and next launch */ }
-      if (owned) return { status: 'owned', token };
-      setPending(true);
+      if (exp ? ownedExp : owned) return { status: 'owned', token };
+      setPending(true, which);
       changed();
       return { status: 'pending', token };
     } catch (e) {
@@ -262,7 +306,7 @@ const Billing = (() => {
 
   // The Restore button, and any moment that wants a fresh answer: ask
   // Play again. Resolves to whether the full game is owned afterwards.
-  api.restore = async function () {
+  api.restore = async function (which) {
     await api.init();
     if (!service) {
       // The store could not be reached at first detection; try again —
@@ -270,10 +314,11 @@ const Billing = (() => {
       readyPromise = null;
       await api.init();
     }
-    if (!service) return owned;
+    const answer = () => (which === 'expansion' ? ownedExp : owned);
+    if (!service) return answer();
     try { await refreshEntitlement(); } catch (e) { /* keep the remembered answer */ }
     changed();
-    return owned;
+    return answer();
   };
 
   api.init();

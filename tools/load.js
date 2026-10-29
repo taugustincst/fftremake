@@ -9,7 +9,7 @@ const path = require('path');
 const vm = require('vm');
 
 const ROOT = path.join(__dirname, '..');
-const ENGINE = ['data', 'maps', 'story', 'unit', 'map', 'battle'];
+const ENGINE = ['data', 'data2', 'maps', 'maps2', 'story', 'story2', 'unit', 'map', 'battle'];
 
 // Everything the tools need to reach.
 const NAMES = [
@@ -21,6 +21,7 @@ const NAMES = [
   'passiveEquipBonus', 'jobLevelFromJP', 'computeDeployZone', 'facingFromDelta',
   'ELEMENTS', 'AFFINITY', 'affinityOf', 'affinityLabel',
   'ICON_GLYPHS', 'ICON_SIZE', 'iconKind', 'iconPalette',
+  'CAMPAIGNS', 'MAPS_HOLLOW', 'CITIES', 'ROADS', 'ERRANDS',
   'PETS', 'PET_MAX', 'petNameFor', 'petSkillBond', 'MATERIALS', 'FORGE_ITEMS', 'FORGE_MAX', 'upgradeable', 'forgeMaterial', 'forgeCost', 'salvageYield', 'fieldMaterials', 'sellable', 'itemType',
 ];
 
