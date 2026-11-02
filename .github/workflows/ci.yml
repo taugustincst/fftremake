@@ -88,3 +88,39 @@ jobs:
             android/app/build/outputs/apk/debug/app-debug.apk
             android/play/build/outputs/apk/debug/play-debug.apk
           if-no-files-found: ignore
+
+  launch:
+    # The static check above proves every class the manifest names is in the
+    # dex. This opens the Play edition on an emulator and fails if it crashes,
+    # which catches what a static check cannot (a component the library
+    # touches at launch but the manifest never declares).
+    name: Play edition launch test
+    needs: android
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: debug-apks
+          path: apks
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Launch on Android 14
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+          script: bash tools/launch-test.sh "$(find apks -name play-debug.apk | head -1)" com.taugustincst.elderon
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: launch-test
+          path: launch-test/
+          if-no-files-found: ignore
