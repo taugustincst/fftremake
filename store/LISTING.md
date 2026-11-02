@@ -467,14 +467,31 @@ game is not designed for children, and declaring an audience under 13 pulls
 the app into the Families policy with its own review. Do not tick
 "appeals to children".
 
-**Data safety**: the app collects no data and shares no data.
-- Does your app collect or share any of the required user data types? **No.**
-- Is all user data encrypted in transit? Not applicable (nothing is sent).
-- Do you provide a way for users to request deletion? Not applicable.
-The game itself collects and transmits nothing; the manifest's INTERNET,
-ACCESS_NETWORK_STATE and com.android.vending.BILLING permissions exist
-solely because Google Play Billing requires them, which is what the review
-will find when it checks.
+**Data safety**: the Play edition collects one data type, to deliver
+what the player bought, and shares nothing.
+- Does your app collect or share any of the required user data types?
+  **Yes.**
+- Data type: **Financial info → Purchase history**. Collected: yes.
+  Shared: no. Processed ephemerally: yes. Required or optional: required
+  (it is part of buying the unlock or the expansion). Purpose: **App
+  functionality**.
+- What happens: after a purchase, the game sends the package name, the
+  product ID and Google Play's purchase token over HTTPS to the
+  acknowledgement endpoint (`ack-endpoint/`, Cloud Run), which checks the
+  purchase with Google Play and acknowledges it so Play does not refund
+  it after three days. The endpoint keeps nothing; a token waiting to be
+  acknowledged stays only in the device's own storage.
+- Is all user data encrypted in transit? **Yes.**
+- Do you provide a way for users to request deletion? Nothing is kept on
+  the server, so there is nothing to delete there; saved games are
+  removed by uninstalling or by Delete in Load Game. Answer the console's
+  question to match.
+- Payment itself is handled by Google Play Billing, not by the game; the
+  game never sees card or account details.
+The manifest's INTERNET, ACCESS_NETWORK_STATE and
+com.android.vending.BILLING permissions are there for the Trusted Web
+Activity and for Play Billing. The sideloaded `app/` edition has no
+permissions and sends nothing.
 
 **Government app**: No. **Financial features**: none. **Health**: no
 health features. **News**: not a news app.

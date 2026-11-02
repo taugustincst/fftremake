@@ -72,6 +72,19 @@ Use that keystore here; do not generate a second one. A lost upload key is
 reset from the console (Setup → App signing → Request upload key reset),
 which takes a support round-trip of a few days.
 
+**Elderon's listing already has its upload key.** It was generated on
+21 October 2026 during the first Play build, with the alias **`android`**
+(not `upload`), RSA 2048, SHA-256
+`47:61:6B:E9:F9:98:BE:D1:F1:C6:08:06:45:36:F3:9A:CE:FD:47:85:21:53:D1:85:C3:30:23:1B:E7:2F:04:16`,
+the same fingerprint `assetlinks.json` already lists. Use that keystore,
+and write `keyAlias=android` in `keystore.properties` and in the
+`ANDROID_UPLOAD_KEY_ALIAS` secret. Before relying on it, confirm in the
+console (Setup → App signing → "Upload key certificate") that Play shows
+the same SHA-256. It was created with a temporary password: change both
+passwords first (`keytool -storepasswd` and `keytool -keypasswd` with
+`-alias android`), record the new one in a password manager, and only then
+remove the temporary one from wherever it was written down.
+
 ## 3. Build the bundle
 
 Needs the Android SDK with platform 36 and a JDK 17 or newer (Android
@@ -98,7 +111,7 @@ Secrets and variables → Actions, add four secrets:
 |---|---|
 | `ANDROID_UPLOAD_KEYSTORE` | the keystore file, base64: `base64 -w0 ~/elderon-upload.jks` |
 | `ANDROID_UPLOAD_STORE_PASSWORD` | its password |
-| `ANDROID_UPLOAD_KEY_ALIAS` | the key alias (`upload` above) |
+| `ANDROID_UPLOAD_KEY_ALIAS` | the key alias: `android` for Elderon's existing key, `upload` for one generated as above |
 | `ANDROID_UPLOAD_KEY_PASSWORD` | the key's password |
 
 Then run the Release workflow from the Actions tab with the version (and a
