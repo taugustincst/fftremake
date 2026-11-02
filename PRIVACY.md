@@ -1,6 +1,6 @@
 # Privacy Policy — Chronicles of Elderon
 
-*Last updated: 30 September 2026*
+*Last updated: 2 November 2026*
 
 Chronicles of Elderon is a single-player game. This policy exists because
 Google Play asks every app to have one, and it is short because there is
@@ -8,10 +8,24 @@ almost nothing to say.
 
 ## What the game collects
 
-Nothing. The game has no accounts, no analytics, no advertising, no crash
-reporting and no network access. The Android app declares no permissions at
-all, including the permission to use the internet, so it cannot send anything
-anywhere even if it wanted to.
+The game has no accounts, no analytics, no advertising and no crash
+reporting.
+
+The Android app from the project's GitHub releases declares no permissions
+at all, including the permission to use the internet, so it cannot send
+anything anywhere.
+
+The Google Play edition is different in one way. It opens the game's
+website in Chrome, so the game's files are fetched from that site, and it
+sells the full game and the expansion through Google Play. After a
+purchase, the game sends the purchase's details from Google Play (the
+app's package name, which item was bought and Google Play's purchase
+token) over an encrypted connection to a small service of ours on Google
+Cloud. That service asks Google Play to confirm and acknowledge the
+purchase, which Google Play requires, and keeps nothing afterwards. Until that check succeeds, the
+token waits in the game's own storage on your device. The
+game never sees your card or Google account details; Google Play handles
+the payment.
 
 ## What the game stores
 
@@ -34,11 +48,15 @@ Load Game deletes one slot.
 ## Children
 
 The game does not knowingly collect any information from anyone, children
-included, because it collects none.
+included. The purchase details above are the only thing that leaves the
+device, and only when a purchase is made.
 
 ## Third parties
 
-There are none. No third-party code runs inside the game.
+No third-party code runs inside the game. In the Google Play edition,
+Google Play handles payments under Google's own privacy policy, the game's
+website is served by GitHub Pages, and the purchase check runs on Google
+Cloud.
 
 ## Changes
 
