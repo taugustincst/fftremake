@@ -15,43 +15,103 @@ Rules for every entry:
 
 ---
 
-## 2026-11-03 (Claude → Folder) — Please check Elderon can still be sold as Paid
+## 2026-11-03 evening (Claude → Folder, Taylor) — Every game is now a paid Play app; what's left
 
-Taylor asked (3 Nov) for Folder to do this check. Claude tried three times
-in Taylor's Chrome and could read Play Console but could not click past the
-developer account picker, so the answer is still unknown.
+Taylor's rules (3 Nov): no game is free, on Play or on the web, and The
+Hollow Sky stays a separate paid add-on. Taylor said "merge all unmerged
+changes" at 22:49, so the game and website pull requests below were merged
+that evening. Nothing has been uploaded to Play Console yet.
 
-### Why it matters
+### Where it stands
 
-Taylor's rule (3 Nov): no game is free. PR **#40** (`play/paid-bundled`,
-merged 3 Nov at Taylor's word, ahead of this check) turns Elderon into a
-paid app ($8.99, every chapter) with The Hollow Sky as one paid add-on,
-`hollow_sky` ($5.99). Google Play never lets an app that was published free
-become paid, so #40 only works if the Elderon listing can still be set to
-Paid. It has never been published, so it should be, but nobody has seen the
-setting yet.
+**Merged 3 Nov** (CI green on each before merge):
+
+| Game | Repo, PR | Play package | Price |
+|---|---|---|---|
+| Chronicles of Elderon | fftremake #40 | `com.taugustincst.elderon` | $8.99, plus `hollow_sky` $5.99 |
+| Ironhold | ironhold #3 (app 1.1.0), #4 (site) | `com.taugustincst.ironhold` | $2.99 |
+| Bubble Pop | bubblepop #4 (Android 7 to 10 crash fix), #5 (site) | `com.taugustincst.bubblepop` | $1.99 |
+| Open Stall | project-shell-01 #1 | `com.taugustincst.openstall` | $4.99 |
+| The Night Apothecary | project-shell-02 #1 | `com.taugustincst.apothecary` | $3.99 |
+| Mended | project-shell-03 #1 | `com.taugustincst.mended` | $4.99 |
+| Keep the Light | project-shell-04 #1 | `com.taugustincst.keepthelight` | $4.99 |
+| Lost Property Office | project-shell-05 #1 | `com.taugustincst.lostproperty` | $2.99 |
+| The 9:15 to Blackpool | project-shell-06 #1 | `com.taugustincst.blackpool` | $3.99 |
+| Night Shift: Laundromat | project-shell-07 #1 | `com.taugustincst.nightshift` | $4.99 |
+| Cartographer's Apprentice | project-shell-08 #1 | `com.taugustincst.cartographer` | $2.99 |
+
+Also merged: taugustincst.github.io #2 (Ironhold upload key in
+`assetlinks.json`) and #3 (home page says the games are paid Google Play
+apps).
+
+- Every app now carries its whole game inside the APK (a WebView that loads
+  bundled files) and asks for no internet permission. No demo, no free
+  chapters, no unlock purchase. Elderon is the one exception with an
+  in-app product: The Hollow Sky, bought through Play Billing and
+  acknowledged on the phone, so no server is needed.
+- Every website now deploys a store page and privacy policy only; the
+  playable web copies are gone. All Pages deploys finished green on 3 Nov.
+  The store pages' Google Play buttons lead nowhere until each app is live.
+- Each repo has a `PLAY.md` (Elderon: `android/PLAY_STORE.md`) with the
+  Console checklist, data safety answers and listing text.
+- Release bundles are not built yet. In each repo, the **Release** workflow
+  builds the signed `.aab` once the upload key secrets are set (see the
+  2026-11-02 entry below for Elderon's key).
+- `ack-endpoint/` and the Cloud Run service `elderon-acknowledge` are no
+  longer used by any game.
+- Main's emulator launch test failed once on Keep the Light and Lost
+  Property Office right after the merge, then passed on re-run. The cause is
+  `tools/launch-test.sh` waiting a fixed 15 seconds on a cold emulator; it
+  should poll for the READY line instead. Not fixed yet.
+
+**Still open in fftremake:**
+
+- **#38** (ja-JP locale fix, notes on the 2.0.2 bundle): the locale fix is
+  still right, but the 2.0.2 notes are out of date now that 3.0.0 is the
+  paid build.
+- **#39** (purchase service for every game): no game uses that service any
+  more. Close it.
+- Dependabot PRs (#5, #23, #31, #32, #33): action and Android tooling
+  bumps. #31 and #33 are major Android Gradle and Gradle upgrades that need
+  a build check before merging.
 
 ### Next steps, in order
 
-1. **Read the price setting.** Owner: Folder.
-   In Play Console, pick the **SteveMo** developer account (Taylor confirmed
-   it is his, 3 Nov), open **Chronicles of Elderon**
-   (`com.taugustincst.elderon`), then **Monetize → App pricing** (in some
-   layouts **Monetize with Play → Products → App pricing**). Note whether
-   the page lets you choose **Paid**, or says the app is free and can't be
-   changed. Change nothing on the page.
-   **Done when** the answer, with the page it came from, is under
-   **Replies** below.
-2. **Decide the next move.** Owner: Taylor.
-   If Paid is offered: set $8.99 there, then follow #40's own HANDOFF entry.
-   If it is locked to Free: tell Claude; #40 would need a new package name
-   and a new listing.
-   **Done when** Taylor has picked one.
+1. **Read Elderon's price setting.** Owner: Folder (Taylor asked, 3 Nov).
+   Claude tried three times in Taylor's Chrome, but the browser wouldn't
+   take clicks. In Play Console pick the **SteveMo** developer account
+   (Taylor confirmed it is his), open **Chronicles of Elderon**, then
+   **Monetize → App pricing** (or **Monetize with Play → Products → App
+   pricing**). Note whether you can choose **Paid** or the app is locked to
+   free. Change nothing.
+   **Done when** the answer and the page it came from are under **Replies**.
+2. **If Elderon is locked to free**, tell Claude. Owner: Taylor. A paid
+   Elderon would need a new package name and a new listing.
+   **Done when** decided.
+3. **Create each paid listing.** Owner: Taylor (Folder can help draft).
+   For every game in the table, follow that repo's `PLAY.md`: set the
+   price, the content rating, data safety ("no data collected"), store
+   text and graphics. For Elderon also create `hollow_sky` at $5.99 and
+   deactivate `full_unlock` if it exists.
+   **Done when** each listing shows its price and has no missing sections.
+4. **Set the upload key secrets and run Release** in each repo, then
+   upload the `.aab` to internal testing. Owner: Taylor.
+   Elderon: version 3.0.0 (versionCode 30000).
+   **Done when** a tester's install opens each game offline.
+5. **Close fftremake #39; decide #38.** Owner: Taylor.
+   **Done when** neither is open.
+6. **Old free builds.** Owner: Taylor. GitHub Releases in fftremake
+   (v1.9 to v2.0.2) and in `is` (v1.5 to v1.14.1) still offer free APK, HTML
+   and desktop builds, and the itch.io page may too. The repos are public,
+   so the source is free to read as well.
+   **Done when** Taylor has decided what to delete or make private.
+7. **Make the launch test wait for READY.** Owner: Claude, on Taylor's go.
+   **Done when** `tools/launch-test.sh` polls in every game repo.
 
 ### Don't
 
-- Don't set a price, create products, upload, publish or merge as part of
-  step 1. Those are Taylor's.
+- Don't upload, publish, set prices or merge as part of step 1. Those are
+  Taylor's.
 - Don't write any password, key or recovery code here.
 
 ### Replies
