@@ -1,11 +1,15 @@
-package com.elderon.tactics;
+package com.taugustincst.elderon;
 
 import android.annotation.SuppressLint;
 import android.content.pm.ApplicationInfo;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
+import android.webkit.ConsoleMessage;
 import android.webkit.RenderProcessGoneDetail;
+import android.webkit.WebChromeClient;
+import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
@@ -32,6 +36,12 @@ import java.util.Locale;
  * games in localStorage are not durable.
  *
  * <p>There is no network permission. Everything the game needs is in the app.
+ * This is the Google Play edition, a paid download with every chapter; the one
+ * thing sold inside it, The Hollow Sky, goes through {@link ElderonPlay}.
+ *
+ * <p>The launch test (tools/launch-test.sh) reads three log lines: ELDERON_READY
+ * when the page has loaded, ELDERON_LOAD_ERROR when it could not, and
+ * ELDERON_MISSING for a file the page asked for that the APK does not carry.
  */
 public class MainActivity extends AppCompatActivity {
 
@@ -39,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String DOMAIN = "appassets.androidplatform.net";
 
     private WebView web;
+    private ElderonPlay play;
     private boolean pageReady;
     /** The last display-cutout insets seen, in CSS pixels, top/right/bottom/left. */
     private final float[] cutout = new float[4];
@@ -83,6 +94,21 @@ public class MainActivity extends AppCompatActivity {
             WebView.setWebContentsDebuggingEnabled(true);
         }
 
+        // The page's console, in logcat, so the launch test can see a script error.
+        web.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public boolean onConsoleMessage(ConsoleMessage m) {
+                String line = m.message() + " (" + m.sourceId() + ":" + m.lineNumber() + ")";
+                if (m.messageLevel() == ConsoleMessage.MessageLevel.ERROR) Log.e("ELDERONWeb", line);
+                else Log.i("ELDERONWeb", line);
+                return true;
+            }
+        });
+
+        // Play Billing for The Hollow Sky (js/billing.js talks to it).
+        play = new ElderonPlay(this, web);
+        web.addJavascriptInterface(play, "ElderonPlay");
+
         final WebViewAssetLoader loader = new WebViewAssetLoader.Builder()
                 .setDomain(DOMAIN)
                 .addPathHandler("/", new WebViewAssetLoader.AssetsPathHandler(this))
@@ -91,7 +117,17 @@ public class MainActivity extends AppCompatActivity {
         web.setWebViewClient(new WebViewClient() {
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
-                return loader.shouldInterceptRequest(request.getUrl());
+                WebResourceResponse r = loader.shouldInterceptRequest(request.getUrl());
+                if (r != null && r.getData() == null && DOMAIN.equals(request.getUrl().getHost())) {
+                    Log.w("ELDERON", "ELDERON_MISSING " + request.getUrl());
+                }
+                return r;
+            }
+
+            @Override
+            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+                if (request.isForMainFrame()) Log.e("ELDERON", "ELDERON_LOAD_ERROR " + error.getErrorCode() + " " + request.getUrl());
+                else if (DOMAIN.equals(request.getUrl().getHost())) Log.w("ELDERON", "ELDERON_MISSING " + request.getUrl());
             }
 
             @Override
@@ -104,6 +140,8 @@ public class MainActivity extends AppCompatActivity {
             public void onPageFinished(WebView view, String url) {
                 pageReady = true;
                 pushCutout();
+                view.evaluateJavascript("document.querySelectorAll('body *').length",
+                        n -> Log.i("ELDERON", "ELDERON_READY elements=" + n + " " + url));
             }
 
             // A WebView's renderer process can die on its own: Android killing
@@ -194,10 +232,15 @@ public class MainActivity extends AppCompatActivity {
         web.resumeTimers();
         web.onResume();
         goImmersive();
+        if (play != null) play.onResume();
     }
 
     @Override
     protected void onDestroy() {
+        if (play != null) {
+            play.destroy();
+            play = null;
+        }
         if (web != null) {
             web.destroy();
             web = null;

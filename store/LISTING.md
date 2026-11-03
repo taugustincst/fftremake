@@ -84,19 +84,17 @@ below is maintained by hand. Character limits are Play's.
     at any time.
 
     NO STRINGS
-    No ads. No accounts. No subscriptions, no premium currency, nothing
-    sold but the game itself: the first five chapters are a free demo,
-    and one purchase ($8.99) unlocks the whole campaign for good. The
-    game itself lives on your device and plays offline; the purchase is
-    handled by Google Play.
+    No ads. No accounts. No subscriptions, no premium currency. You buy
+    the game once and every chapter of the first campaign is yours; The
+    Hollow Sky is the one add-on, sold in the app. The game lives on your
+    device and plays offline; purchases are handled by Google Play.
 
 **App category**: Game → Strategy
 **Tags**: Tactical RPG, Turn-based strategy, Single player, Offline
 **Contact email**: your address (Play shows it publicly)
-**Privacy policy URL**: the game's own page, served with the web build:
-`https://taugustincst.github.io/fftremake/privacy.html` (or the `is`
-repository's Pages address once it is enabled). Play wants a plain web page,
-not a file inside a repository.
+**Privacy policy URL**: `https://taugustincst.github.io/fftremake/privacy.html`,
+published with the store page (`.github/workflows/pages.yml`). Play wants a
+plain web page, not a file inside a repository.
 
 ## Store listing in other languages
 
@@ -164,11 +162,10 @@ Play's 80 characters.
     Spielstand-Code trägt dein Spiel auf ein anderes Gerät.
 
     KEINE HAKEN
-    Keine Werbung. Keine Konten. Keine Abos, keine Premiumwährung, nichts
-    wird verkauft außer dem Spiel selbst: Die ersten fünf Kapitel sind eine
-    kostenlose Demo, ein Kauf (8,99 $) schaltet die ganze Kampagne für immer
-    frei. Das Spiel selbst ist auf deinem Gerät und läuft offline; der Kauf
-    läuft über Google Play.
+    Keine Werbung. Keine Konten. Keine Abos, keine Premiumwährung. Du kaufst
+    das Spiel einmal, und jedes Kapitel der ersten Kampagne gehört dir; The
+    Hollow Sky ist die einzige Erweiterung, in der App erhältlich. Das Spiel
+    ist auf deinem Gerät und läuft offline; Käufe laufen über Google Play.
 
     Menüs, Hinweise und Schaltflächen auf Deutsch; Namen, Geschichte und
     Gegenstandstexte bleiben auf Englisch.
@@ -231,10 +228,10 @@ Play's 80 characters.
 
     SANS CONDITIONS
     Pas de publicité. Pas de compte. Pas d’abonnement, pas de monnaie
-    premium, rien n’est vendu sauf le jeu lui-même : les cinq premiers
-    chapitres sont une démo gratuite, un seul achat (8,99 $) débloque toute
-    la campagne pour de bon. Le jeu lui-même est sur votre appareil et se
-    joue hors ligne ; l’achat passe par Google Play.
+    premium. Vous achetez le jeu une fois et chaque chapitre de la première
+    campagne est à vous ; The Hollow Sky est la seule extension, vendue dans
+    l’application. Le jeu est sur votre appareil et se joue hors ligne ; les
+    achats passent par Google Play.
 
     Menus, indications et boutons en français ; les noms, l’histoire et les
     textes des objets restent en anglais.
@@ -296,11 +293,11 @@ Play's 80 characters.
     momento. Un código de guardado lleva tu partida a otro dispositivo.
 
     SIN CONDICIONES
-    Sin anuncios. Sin cuentas. Sin suscripciones, sin moneda prémium, no se
-    vende nada más que el propio juego: los primeros cinco capítulos son una
-    demo gratuita y una sola compra (8,99 $) desbloquea toda la campaña para
-    siempre. El juego en sí está en tu dispositivo y funciona sin conexión;
-    la compra la gestiona Google Play.
+    Sin anuncios. Sin cuentas. Sin suscripciones, sin moneda prémium. Compras
+    el juego una vez y cada capítulo de la primera campaña es tuyo; The
+    Hollow Sky es la única expansión, a la venta en la app. El juego está en
+    tu dispositivo y funciona sin conexión; las compras las gestiona Google
+    Play.
 
     Menús, indicaciones y botones en español; los nombres, la historia y los
     textos de los objetos siguen en inglés.
@@ -362,11 +359,10 @@ Play's 80 characters.
     código de save leva seu jogo para outro aparelho.
 
     SEM AMARRAS
-    Sem anúncios. Sem contas. Sem assinaturas, sem moeda premium, nada é
-    vendido além do próprio jogo: os cinco primeiros capítulos são uma demo
-    gratuita, e uma única compra (US$ 8,99) desbloqueia toda a campanha para
-    sempre. O jogo em si fica no seu aparelho e roda offline; a compra é
-    feita pelo Google Play.
+    Sem anúncios. Sem contas. Sem assinaturas, sem moeda premium. Você compra
+    o jogo uma vez e todos os capítulos da primeira campanha são seus; The
+    Hollow Sky é a única expansão, vendida no app. O jogo fica no seu
+    aparelho e roda offline; as compras são feitas pelo Google Play.
 
     Menus, dicas e botões em português; nomes, história e textos de itens
     continuam em inglês.
@@ -420,8 +416,8 @@ Play's 80 characters.
 
     しがらみなし
     広告なし。アカウント不要。サブスクリプションもプレミアム通貨もなし。
-    売るのはゲーム本体だけです：最初の5章は無料体験版、1回の購入（8.99ドル）
-    で全キャンペーンが永続的に解放されます。ゲーム本体は端末の中にあり、
+    ゲームを一度買えば、最初のキャンペーンの全章が遊べます。追加コンテンツは
+    アプリ内で販売する「The Hollow Sky」だけです。ゲームは端末の中にあり、
     オフラインで遊べます。購入はGoogle Playが処理します。
 
     メニュー・案内・ボタンは日本語。名前、物語、アイテムの説明は英語のままです。
@@ -447,9 +443,8 @@ tablets; the same two files satisfy both slots.
 **Ads**: No, this app does not contain ads.
 
 **App access**: Everything is available without an account or login.
-Content past the fifth chapter is behind the one-time in-app purchase
-described above — that is a purchase, not restricted access, and the
-demo needs nothing at all.
+The game is a paid download with the whole first campaign; The Hollow Sky
+is a one-time in-app purchase — that is a purchase, not restricted access.
 
 **Content rating** (IARC questionnaire) — answers for the game category:
 - Violence: cartoon or fantasy violence against fantasy characters; no
@@ -457,8 +452,8 @@ demo needs nothing at all.
   "fall"; they can be revived.
 - Sexuality, nudity, profanity, drugs, alcohol, tobacco, gambling: none.
 - User interaction, sharing of location or personal information: none.
-- Digital purchases: yes — one optional one-time in-app purchase
-  (full-game unlock, $8.99) after a free five-chapter demo; no premium
+- Digital purchases: yes — the game is a paid download ($8.99), with one
+  optional one-time in-app purchase (The Hollow Sky, $5.99); no premium
   currency, no subscriptions.
 - Expected outcome: ESRB Everyone 10+ / PEGI 7 / USK 6 or similar.
 
@@ -467,31 +462,18 @@ game is not designed for children, and declaring an audience under 13 pulls
 the app into the Families policy with its own review. Do not tick
 "appeals to children".
 
-**Data safety**: the Play edition collects one data type, to deliver
-what the player bought, and shares nothing.
+**Data safety**: no data collected, no data shared.
 - Does your app collect or share any of the required user data types?
-  **Yes.**
-- Data type: **Financial info → Purchase history**. Collected: yes.
-  Shared: no. Processed ephemerally: yes. Required or optional: required
-  (it is part of buying the unlock or the expansion). Purpose: **App
-  functionality**.
-- What happens: after a purchase, the game sends the package name, the
-  product ID and Google Play's purchase token over HTTPS to the
-  acknowledgement endpoint (`ack-endpoint/`, Cloud Run), which checks the
-  purchase with Google Play and acknowledges it so Play does not refund
-  it after three days. The endpoint keeps nothing; a token waiting to be
-  acknowledged stays only in the device's own storage.
-- Is all user data encrypted in transit? **Yes.**
-- Do you provide a way for users to request deletion? Nothing is kept on
-  the server, so there is nothing to delete there; saved games are
-  removed by uninstalling or by Delete in Load Game. Answer the console's
-  question to match.
-- Payment itself is handled by Google Play Billing, not by the game; the
+  **No.**
+- The app has no INTERNET permission (the manifest removes it), so the
+  game cannot send anything. Saved games stay on the device and are
+  removed by uninstalling or by Delete in Load Game.
+- Buying the game and The Hollow Sky is handled by Google Play. The game
+  asks Play on the device whether The Hollow Sky is owned and acknowledges
+  the purchase there (Play Billing Library); no server is involved and the
   game never sees card or account details.
-The manifest's INTERNET, ACCESS_NETWORK_STATE and
-com.android.vending.BILLING permissions are there for the Trusted Web
-Activity and for Play Billing. The sideloaded `app/` edition has no
-permissions and sends nothing.
+- The one permission in the manifest is com.android.vending.BILLING, added
+  by the Play Billing Library.
 
 **Government app**: No. **Financial features**: none. **Health**: no
 health features. **News**: not a news app.
@@ -499,6 +481,12 @@ health features. **News**: not a news app.
 **Advertising ID**: the app does not use the advertising ID.
 
 ## Release notes
+
+**3.0.0**
+
+    The whole game, in the app. Chronicles of Elderon is now a paid download with every chapter of
+    the first campaign included and nothing to unlock. The game is packed inside the app and plays
+    fully offline. The Hollow Sky is still yours to add from the title screen.
 
 **2.0.1**
 

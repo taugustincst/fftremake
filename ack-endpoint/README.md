@@ -1,5 +1,11 @@
 # Elderon purchase-acknowledgement endpoint
 
+> **Not used.** Since 3 November 2026 the Play app acknowledges purchases on
+> the device, through Play Billing Library 8 (`android/play/.../ElderonPlay.java`),
+> and `full_unlock` no longer exists: the game is a paid app and The Hollow
+> Sky is the one in-app product. Nothing here needs deploying. The folder is
+> kept for reference and can be deleted.
+
 A minimal Google Cloud Functions (2nd gen) HTTP endpoint that verifies and
 acknowledges `full_unlock` purchases server-side, via the Google Play
 Developer API (androidpublisher v3).

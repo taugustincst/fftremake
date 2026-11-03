@@ -1,36 +1,23 @@
 # Chronicles of Elderon — Tactics
 
-A browser-based tactical RPG in the spirit of the classic isometric job-system
-tactics games. No build step, no dependencies, no network: open `index.html` in
-a browser, or serve the folder with any static file server.
+A tactical RPG in the spirit of the classic isometric job-system tactics
+games, sold on Google Play. It is written as a web page with no build step,
+no dependencies and no network, and the Android app carries it inside.
 
 > Two princes claim one crown. Rowan Aldric, youngest son of a house that chose
 > the wrong side, rides north with the last of his companions.
 
 ## Play it
 
-- **In a browser:** https://taugustincst.github.io/fftremake/ — the game as a
-  progressive web app, installable from the browser menu and playable offline
-  once opened. Published from `main` by `.github/workflows/pages.yml`, which
-  writes the site to the `gh-pages` branch; GitHub Pages serves that branch
-  (if the site ever needs switching on by hand: Settings → Pages → Source →
-  Deploy from a branch → `gh-pages`).
-- **On a computer:** the same release carries the game as a program for
-  Windows, macOS and Linux (the `-win32-x64`, `-darwin-arm64`, `-darwin-x64`
-  and `-linux-x64` zips): one window, no browser, made from the single-file
-  build by the wrapper in `desktop/`. This is the build Steam sells;
-  `store/STEAM.md` is the path through Steamworks and the store page's copy.
-- **On itch.io:** the release's `-itch.zip` is the web build packed the way
-  itch's uploader wants it; `store/ITCH.md` has the page settings and copy,
-  and the release workflow pushes it with butler once the key is set.
-- **On Android:** the [latest release](https://github.com/taugustincst/fftremake/releases/latest)
-  carries an `.apk` to sideload (signed with a debug key, so it installs on
-  any phone) and, once the repository holds the upload key in its secrets,
-  the `-play.aab` bundle of the Google Play edition, a Trusted Web Activity
-  around the site, as `android/PLAY_STORE.md` describes. The same release
-  carries the whole game as a single `.html`
-  file. Releases are cut by `.github/workflows/release.yml`: run it from the
-  Actions tab with a version number, or push a tag such as `v1.8.1`.
+Chronicles of Elderon is sold on **Google Play** as a paid app, with every
+chapter of the main campaign included; The Hollow Sky, the expansion, is
+the one thing sold inside it. The game plays fully offline on the phone.
+https://taugustincst.github.io/fftremake/ is its store page, published from
+`main` by `.github/workflows/pages.yml`; the site no longer serves the game.
+[android/PLAY_STORE.md](android/PLAY_STORE.md) is the path through the Play
+Console, and `.github/workflows/release.yml` builds the signed bundle Play
+takes. Nothing else is published: no web build, no sideloadable APK, no
+desktop or itch.io release.
 
 ## The game
 
@@ -288,8 +275,8 @@ own. The ids under them are unchanged, so an old save loads as it was.
   under four new skies with three pieces of music written for them; the
   Marches' own errands and training; and thirty-four new arms. The first
   game's capital can be walked back to from the Marches, and a save
-  remembers both roads. On Google Play the expansion is its own product;
-  on the web, desktop and itch it comes with the game.
+  remembers both roads. It is sold inside the game on Google Play, as
+  its own product.
 - **Know your enemy.** An enemy's card lists the skills it has, so a Coven
   Mage's Fire or a priest's Raise is never a surprise.
 - **Threat range on a tap.** Tap an enemy while choosing an action, or during
@@ -329,8 +316,7 @@ own. The ids under them are unchanged, so an old save loads as it was.
 
 ## Playing on a phone
 
-The game is built for touch as well as mouse, in either orientation. There are
-three ways to get it onto a phone, in order of how little work they take.
+The game is built for touch as well as mouse, in either orientation.
 
 **Your game on another device.** Load Game → Export turns a save slot into a
 code beginning `ELDERON1.` — copy it, share it, or save it as a file — and
@@ -347,30 +333,21 @@ rest stays as written, and a language can be added a chapter at a time. The
 table is `js/i18n.js`, keyed by the English text; `tools/validate.js` checks
 every language has every key of the shell.
 
-**One file.** `node tools/bundle.js` writes `dist/elderon.html`: the stylesheet,
-all ten scripts and the icons inlined into a single self-contained page with
-nothing else to fetch. Send it to the phone however you like — a download, a
-message, a memory stick — and open it. It plays straight off the filesystem with
-no server, and saves persist. Host that one file anywhere and it is also a
-complete web build.
+**The Android app.** `android/play` is the Google Play edition: a WebView
+under the listing's package name that bundles the whole game into the app,
+asks for no permissions at all (it cannot reach the network), and sells The
+Hollow Sky through Play Billing, acknowledging purchases on the device.
+`cd android && ./gradlew :play:bundleRelease` builds the bundle Play takes.
+See [android/README.md](android/README.md) for how it works and
+[android/PLAY_STORE.md](android/PLAY_STORE.md) for the path through the Play
+Console; the listing copy, policy answers and graphics are in
+[store/](store/LISTING.md). It targets Android 16 as Play requires and is
+built on every push by CI, which checks that it would load and opens it on
+an emulator.
 
-**Install the web version.** Served over HTTPS, the game is a progressive web
-app: open it in Chrome and choose "Install app". It lands on the home screen
-with its own icon, launches fullscreen and runs offline. The single-file build
-builds its own manifest at runtime, so it offers to install too.
-
-**Build the Android apps.** `android/` holds a Gradle project with two of
-them. `app/` wraps the game in a WebView and bundles it into an app with no
-permissions at all — it cannot reach the network; `cd android && ./gradlew
-assembleDebug` builds it. `play/` is the Google Play edition, a Trusted Web
-Activity under the listing's package name that opens the site in Chrome and
-sells the game through Play Billing; `./gradlew :play:bundleRelease` builds
-the bundle Play takes. See [android/README.md](android/README.md) for how
-both work and [android/PLAY_STORE.md](android/PLAY_STORE.md) for the path
-through the Play Console; the listing copy, policy answers and graphics are
-in [store/](store/LISTING.md). Both target Android 16 as Play requires and
-are built on every push by CI, which also checks that each would load:
-every class its manifest names is in its dex.
+For development, the game still runs from the repository root in any
+browser (`python3 -m http.server`), and `node tools/bundle.js` still writes
+the single-file `dist/elderon.html`; neither is published.
 
 On a phone the layout changes shape: portrait turns the turn order into a strip
 across the top and gives the command panel the full width, landscape puts

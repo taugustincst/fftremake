@@ -1,21 +1,18 @@
 name: Pages
 
-# Hosts the web game on GitHub Pages. The game is plain static files with
-# relative paths and a service worker scoped to its own directory, so it
-# runs unchanged under the repository's subpath. Only the files the game
-# itself needs are published: the tests, tools, store kit and Android
-# project stay out of the site. The site lives on the gh-pages branch.
+# Publishes the game's store page on GitHub Pages. Chronicles of Elderon is
+# sold on Google Play with the whole game inside the app, so the site no
+# longer serves the game: only site/index.html (the store page), the privacy
+# policy the Play listing links to, the store graphics, and a sw.js that
+# clears the offline copy of the game earlier visitors installed. The site
+# lives on the gh-pages branch.
 on:
   push:
     branches: [main]
     paths:
-      - 'index.html'
-      - 'manifest.webmanifest'
-      - 'sw.js'
+      - 'site/**'
       - 'privacy.html'
-      - 'css/**'
-      - 'js/**'
-      - 'icons/**'
+      - 'store/**'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
@@ -33,14 +30,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - name: Stage the site
+      - name: Stage the store page
         run: |
-          mkdir -p site
-          cp index.html manifest.webmanifest sw.js privacy.html site/
-          cp -r css js icons site/
+          mkdir -p _site/img
+          cp site/index.html site/sw.js privacy.html _site/
+          cp store/feature-graphic-1024x500.jpg store/phone-*.jpg _site/img/
+          cp icons/icon-192.png _site/img/
           # Pages runs Jekyll by default; this tells it to serve the files as they are.
-          touch site/.nojekyll
-          ls -R site | head -50
+          touch _site/.nojekyll
+          # Nothing playable may be published.
+          if [ -e _site/js ] || grep -q 'src="js/' _site/index.html; then
+            echo "the store page must not carry the game"; exit 1
+          fi
+          ls -R _site
       # The site is served from the gh-pages branch, which GitHub Pages picks
       # up on its own for a public repository: no site has to be created by
       # hand first, which the deploy-pages route needs an admin token for
@@ -48,7 +50,7 @@ jobs:
       - uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: site
+          publish_dir: _site
           publish_branch: gh-pages
           force_orphan: true
           commit_message: 'Publish ${{ github.sha }}'

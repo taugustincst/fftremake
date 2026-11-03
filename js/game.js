@@ -194,15 +194,13 @@ class Game {
     $('btn-coach-ok').onclick = () => this.ui.coachHide(false);
     $('btn-coach-skip').onclick = () => this.ui.coachHide(true);
     $('btn-battle').onclick = () => this.startNextChapter();
-    $('btn-unlock-open').onclick = () => this.openUnlock();
     $('btn-unlock-buy').onclick = () => this.buyUnlock();
     $('btn-unlock-restore').onclick = () => this.restoreUnlock();
     $('btn-unlock-back').onclick = () => { if (this.state) this.showWorld(); else this.showScreen('title'); };
-    // The store's answers can land after the camp is drawn (Play is asked
-    // at launch, and again after a purchase): redraw the pieces that
-    // depend on them whenever they change.
+    // The store's answers can land after the screen is drawn (Play is
+    // asked at launch, after a purchase, and whenever a pending payment
+    // clears): redraw the unlock screen whenever they change.
     if (window.Billing) Billing.onChange = () => {
-      this.syncUnlockCard();
       if (this.screen === 'unlock') this.renderUnlock();
     };
     $('btn-train').onclick = () => this.startTraining();
@@ -938,7 +936,6 @@ class Game {
         <div class="chapter-map">${MAPS[ch.map].name} · ${tr('{n} enemies · up to Lv {lv}', { n: ch.enemies.length, lv: topLevel })}</div>
         <div class="chapter-goal">${tr('Objective: {goal}', { goal })}${o.protectLeader ? ` · ${tr('Rowan must not be lost')}` : ''}</div>
         ${ready ? `<div class="chapter-warn">${ready}</div>` : ''}
-        ${window.Billing && !s.campaign && Billing.locksChapter(s.chapter) ? `<div class="chapter-warn">${tr('The demo ends at the Gates of Dunmarch. This road opens with the full game.')}</div>` : ''}
         ${s.chapter > 0 ? `<div class="chapter-map revisit-row"><label>${tr('Fight a won field again for half the pay:')} <select id="revisit-sel">${this.wonChapters().map(([i, c]) => `<option value="${i}">${i + 1}. ${c.title}</option>`).join('')}</select></label> <button id="btn-revisit" class="mini">${tr('Revisit')}</button></div>` : ''}`;
       if ($('btn-revisit')) $('btn-revisit').onclick = () => this.revisitChapter(+$('revisit-sel').value);
       $('btn-battle').disabled = false;
@@ -1003,7 +1000,6 @@ class Game {
     const hireLvl = Math.max(1, this.avgLevel() - 1);
     $('hire-info').textContent = `Hire a level ${hireLvl} recruit for 300 marks (party max ${PARTY_MAX}).`;
     $('btn-hire-squire').disabled = $('btn-hire-chemist').disabled = s.gil < 300 || s.party.length >= PARTY_MAX;
-    this.syncUnlockCard();
     this.showScreen('world');
     // Drawn once the screen is showing, so the canvas has a width to fit.
     this.drawWorldMap();
@@ -2315,14 +2311,6 @@ class Game {
     if (this.atFork()) return this.openChoice();
     const ch = this.chapterAt(this.state.chapter);
     if (!ch) return this.startTrial(resume);
-    // The Play edition's demo ends at the Gates of Dunmarch: the first
-    // five chapters are free, and the road beyond belongs to the unlocked
-    // game. Billing.locksChapter is true only where Play's store answers
-    // for this app (see js/billing.js) — on the open web there is no
-    // store, it is never true, and nothing here changes. A battle already
-    // begun and taken up again (resume) is never gated: it was started
-    // fairly, and it finishes.
-    if (!resume && window.Billing && !this.state.campaign && Billing.locksChapter(this.state.chapter)) { this.openUnlock(); return; }
     if (!resume) await this.story(ch.title, ch.intro);
     // Mirrorwater: the company fights its own reflection, made at the
     // moment the field is set from whoever is marching.
@@ -2367,78 +2355,65 @@ class Game {
   }
 
   // ---- the unlock (Play edition) ---------------------------------------------------------
-  // The camp's Options card exists only while the store is present and the
-  // game is not yet owned; it is hidden everywhere else, so most players
-  // never see any of this.
-  syncUnlockCard() {
-    const card = $('unlock-card'); if (!card) return;
-    card.hidden = !(window.Billing && Billing.armed() && !Billing.owned());
-  }
-
-  // The unlock screen sells one of two things: the full game, or the
-  // Hollow Sky. Which one is remembered until the screen is left.
-  openUnlock(which) { this._unlockWhich = which === 'expansion' ? 'expansion' : 'full'; this._unlockMsg = ''; this.renderUnlock(); this.showScreen('unlock'); }
+  // The whole first game comes with the download; the one thing the Play
+  // app sells is The Hollow Sky. This screen is reached only where
+  // Billing.locksExpansion() is true — inside the Play app before Play says
+  // the expansion is owned — and nowhere in the other builds.
+  openUnlock() { this._unlockWhich = 'expansion'; this._unlockMsg = ''; this.renderUnlock(); this.showScreen('unlock'); }
 
   renderUnlock() {
     if (!window.Billing) return;
-    const which = this._unlockWhich || 'full', exp = which === 'expansion';
+    const which = 'expansion';
     const d = Billing.itemDetails(which);
-    $('unlock-title').textContent = d.title || (exp ? 'The Hollow Sky' : tr('Unlock the full game'));
+    $('unlock-title').textContent = d.title || 'The Hollow Sky';
     document.body.dataset.unlock = which;
     $('unlock-price').textContent = Billing.priceText(which);
     const ownedNow = Billing.owned(which);
     $('unlock-owned').hidden = !ownedNow;
     $('unlock-buy-row').hidden = ownedNow;
-    // The screen's fixed words are the full game's; the expansion borrows the screen and says its own.
-    const ownedP = document.querySelector('#unlock-owned p'), note = document.querySelector('#screen-unlock .unlock-note');
-    if (ownedP) ownedP.textContent = exp ? 'The Hollow Sky is unlocked on this account. The road east is yours.' : tr('The full game is unlocked on this account. The road is yours.');
-    if (note) note.textContent = exp ? 'A second campaign for a company that has finished the first, or a veteran company begun from the title: sixteen chapters, three answers, four trades, five towns. Your saves and the first game are untouched either way.'
-      : tr('Your company, your saves and everything the demo earned carry over — the same campaign, with the gate open. The demo itself stays playable: camp, training, the shop, the cities you have opened, and every field you have won.');
-    $('unlock-msg').textContent = this._unlockMsg || (Billing.pending() && !ownedNow
+    $('unlock-msg').textContent = this._unlockMsg || (Billing.pending(which) && !ownedNow
       ? tr('A purchase is waiting on Google Play to confirm it. When it clears, Restore Purchase will find it — and it is checked again on every launch.')
       : '');
     const busy = !!this._unlockBusy;
     $('btn-unlock-buy').disabled = busy;
     $('btn-unlock-restore').disabled = busy;
-    $('btn-unlock-buy').textContent = busy ? tr('Asking Google Play…') : exp ? tr('Unlock The Hollow Sky — {price}', { price: Billing.priceText(which) }) : tr('Unlock the full game — {price}', { price: Billing.priceText() });
+    $('btn-unlock-buy').textContent = busy ? tr('Asking Google Play…') : tr('Unlock The Hollow Sky — {price}', { price: Billing.priceText(which) });
   }
 
   async buyUnlock() {
     if (this._unlockBusy || !window.Billing) return;
-    const which = this._unlockWhich || 'full';
     this._unlockBusy = true; this.renderUnlock();
-    const r = await Billing.buy(which);
+    const r = await Billing.buy('expansion');
     this._unlockBusy = false;
     if (r.status === 'owned') {
       this._unlockMsg = '';
-      this.toast(which === 'expansion' ? tr('The Hollow Sky is unlocked. The road east is yours.') : tr('The full game is unlocked. The road is yours.'));
+      this.toast(tr('The Hollow Sky is unlocked. The road east is yours.'));
       if (this.state) this.showWorld(); else this.showScreen('title');
       return;
     }
     this._unlockMsg =
       r.status === 'pending' ? tr('Google Play is still confirming the payment. Nothing is lost: the unlock arrives when it clears, and Restore Purchase below will find it.')
       : r.status === 'cancelled' ? tr('The purchase was closed before it finished. Nothing was charged.')
-      : r.status === 'unavailable' ? tr('Google Play cannot be reached from here just now. The demo remains open; try again where the store answers.')
+      : r.status === 'unavailable' ? tr('Google Play cannot be reached from here just now. Try again when the store answers.')
       : tr('The purchase did not go through. Nothing was charged; Google Play said no more than that.');
     this.renderUnlock();
   }
 
   async restoreUnlock() {
     if (this._unlockBusy || !window.Billing) return;
-    const which = this._unlockWhich || 'full';
     this._unlockBusy = true; this.renderUnlock();
-    const has = await Billing.restore(which);
+    const has = await Billing.restore('expansion');
     this._unlockBusy = false;
     if (has) {
       this._unlockMsg = '';
-      this.toast(which === 'expansion' ? tr('Purchase restored. The Hollow Sky is unlocked.') : tr('Purchase restored. The full game is unlocked.'));
+      this.toast(tr('Purchase restored. The Hollow Sky is unlocked.'));
       if (this.state) this.showWorld(); else this.showScreen('title');
       return;
     }
-    this._unlockMsg = Billing.pending(which)
+    this._unlockMsg = Billing.pending('expansion')
       ? tr('Still waiting on Google Play to confirm the earlier payment. It is checked again on every launch.')
-      : which === 'expansion' ? tr('Google Play shows no purchase of The Hollow Sky for this account. If you bought it under another account, restore from there.')
-      : tr('Google Play shows no purchase of the full game for this account. If you bought it under another account, restore from there.');
+      : Billing.reachable && !Billing.reachable() ? tr('Google Play cannot be reached from here just now. Try again when the store answers.')
+      : tr('Google Play shows no purchase of The Hollow Sky for this account. If you bought it under another account, restore from there.');
     this.renderUnlock();
   }
 
