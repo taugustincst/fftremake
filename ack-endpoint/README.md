@@ -100,8 +100,13 @@ gcloud functions deploy elderon-acknowledge \
   --source=. \
   --entry-point=acknowledgePurchase \
   --trigger-http \
-  --set-env-vars=EXPECTED_PACKAGE_NAME=com.taugustincst.elderon,EXPECTED_PRODUCT_ID=full_unlock,SERVICE_ACCOUNT_KEY_PATH=/path/inside/runtime/key.json
+  --set-env-vars='^;^ALLOWED_PRODUCTS=com.taugustincst.elderon:full_unlock|hollow_sky,com.taugustincst.openstall:full_unlock,com.taugustincst.apothecary:full_unlock,com.taugustincst.mended:full_unlock,com.taugustincst.keepthelight:full_unlock,com.taugustincst.nightshift:full_unlock,com.taugustincst.cartographer:full_unlock'
 ```
+
+(`^;^` tells gcloud the list separator is `;`, because the value itself
+contains commas. Use `--set-env-vars`, not `--update-env-vars`, so an old
+`EXPECTED_PACKAGE_NAME` from an earlier deploy does not linger; it is
+ignored when `ALLOWED_PRODUCTS` is set, but it is clearer gone.)
 
 Notes:
 
@@ -146,6 +151,29 @@ After a successful purchase in the Play build:
    for any purchase token still flagged unacknowledged locally, so a
    player who bought and immediately closed the app is still covered
    inside the 3-day window.
+
+## One service for every game (2026-11-03)
+
+The same endpoint now acknowledges purchases for Elderon and the six games
+that sell an unlock (Open Stall, The Night Apothecary, Mended, Keep the
+Light, Night Shift: Laundromat, Cartographer's Apprentice). Each of their
+`js/billing.js` reports to this URL.
+
+- `ALLOWED_PRODUCTS` lists the apps and products it may acknowledge, as
+  `package:product|product,package:product`. Unset, it falls back to the
+  old `EXPECTED_PACKAGE_NAME` settings, and with neither, to the built-in
+  list of all seven games. Anything else is refused with 403.
+- Cross-origin: the games are pages on `https://taugustincst.github.io`,
+  so the browser sends an `OPTIONS` preflight before each JSON `POST`. The
+  endpoint now answers it and sets `Access-Control-Allow-Origin` for the
+  origins in `ALLOWED_ORIGINS` (default `https://taugustincst.github.io`).
+  Before this, the function answered the preflight with 405 and no CORS
+  headers, which a browser treats as a refusal, so reports from the game
+  would not have reached it.
+- Play Console: the service account needs the same permission on each new
+  app as on Elderon (Users and permissions, per app).
+- `npm test` runs `test.js`, which checks the gate and the CORS answer with
+  the Play API stubbed out.
 
 ## Local development
 

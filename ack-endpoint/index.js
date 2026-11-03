@@ -1,7 +1,8 @@
 'use strict';
 
 /**
- * Chronicles of Elderon — Play purchase acknowledgement endpoint (SCAFFOLD).
+ * Play purchase acknowledgement endpoint for Chronicles of Elderon and the
+ * other taugustincst games that sell an unlock through Google Play.
  *
  * Why this exists: Google Play refunds and revokes any purchase that is not
  * acknowledged within 3 days of purchase. Acknowledgement must happen
@@ -30,18 +31,51 @@
 const functions = require('@google-cloud/functions-framework');
 const { google } = require('googleapis');
 
-// Expected values — kept in env so the same code can be pointed at a test
-// package later, but they default to the real Elderon identifiers. The
-// product gate is a small allowlist: the base game's unlock and the
-// expansion's, and nothing else. EXPECTED_PRODUCT_IDS (comma-separated)
-// overrides the list; the older single EXPECTED_PRODUCT_ID still works.
-const EXPECTED_PACKAGE_NAME =
-  process.env.EXPECTED_PACKAGE_NAME || 'com.taugustincst.elderon';
-const EXPECTED_PRODUCT_IDS = (
-  process.env.EXPECTED_PRODUCT_IDS ||
-  process.env.EXPECTED_PRODUCT_ID ||
-  'full_unlock,hollow_sky'
-).split(',').map(s => s.trim()).filter(Boolean);
+// Which apps and products this endpoint may acknowledge. One service
+// serves every game: ALLOWED_PRODUCTS lists them as
+//   package:product|product,package:product
+// e.g. "com.taugustincst.elderon:full_unlock|hollow_sky,com.taugustincst.mended:full_unlock".
+// Without it, the older single-app settings still work (EXPECTED_PACKAGE_NAME
+// with EXPECTED_PRODUCT_IDS or EXPECTED_PRODUCT_ID); without those either,
+// the built-in list below applies: Elderon and the six free-to-try games.
+// Anything not listed is refused with 403, so the service can never be used
+// to touch another developer's purchases.
+const DEFAULT_ALLOWED_PRODUCTS = [
+  'com.taugustincst.elderon:full_unlock|hollow_sky',
+  'com.taugustincst.openstall:full_unlock',
+  'com.taugustincst.apothecary:full_unlock',
+  'com.taugustincst.mended:full_unlock',
+  'com.taugustincst.keepthelight:full_unlock',
+  'com.taugustincst.nightshift:full_unlock',
+  'com.taugustincst.cartographer:full_unlock',
+].join(',');
+
+function parseAllowedProducts(env) {
+  const map = new Map();
+  if (env.ALLOWED_PRODUCTS) {
+    for (const entry of env.ALLOWED_PRODUCTS.split(',')) {
+      const [pkg, products] = entry.split(':').map(s => (s || '').trim());
+      if (!pkg || !products) continue;
+      map.set(pkg, products.split('|').map(s => s.trim()).filter(Boolean));
+    }
+    return map;
+  }
+  if (env.EXPECTED_PACKAGE_NAME) {
+    map.set(env.EXPECTED_PACKAGE_NAME, (env.EXPECTED_PRODUCT_IDS || env.EXPECTED_PRODUCT_ID || 'full_unlock,hollow_sky')
+      .split(',').map(s => s.trim()).filter(Boolean));
+    return map;
+  }
+  return parseAllowedProducts({ ALLOWED_PRODUCTS: DEFAULT_ALLOWED_PRODUCTS });
+}
+const ALLOWED_PRODUCTS = parseAllowedProducts(process.env);
+
+// The games are web pages (GitHub Pages) inside a Trusted Web Activity, so
+// their POST is a cross-origin request with a JSON body: the browser first
+// sends an OPTIONS preflight and only sends the POST if the answer allows
+// the page's origin. Without these headers every report from the game is
+// blocked before it leaves the browser.
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || 'https://taugustincst.github.io')
+  .split(',').map(s => s.trim()).filter(Boolean);
 const SERVICE_ACCOUNT_KEY_PATH = process.env.SERVICE_ACCOUNT_KEY_PATH;
 
 // Play purchase fields (androidpublisher v3 ProductPurchase):
@@ -72,7 +106,19 @@ function getPublisher() {
   return androidPublisher;
 }
 
-functions.http('acknowledgePurchase', async (req, res) => {
+async function acknowledgePurchase(req, res) {
+  const origin = req.get ? req.get('Origin') : (req.headers && req.headers.origin);
+  if (origin && ALLOWED_ORIGINS.includes(origin)) {
+    res.set('Access-Control-Allow-Origin', origin);
+    res.set('Vary', 'Origin');
+  }
+  if (req.method === 'OPTIONS') {
+    res.set('Access-Control-Allow-Methods', 'POST');
+    res.set('Access-Control-Allow-Headers', 'Content-Type');
+    res.set('Access-Control-Max-Age', '3600');
+    return res.status(204).send('');
+  }
+
   res.set('Content-Type', 'application/json');
 
   if (req.method !== 'POST') {
@@ -93,10 +139,10 @@ functions.http('acknowledgePurchase', async (req, res) => {
     });
   }
 
-  // Hard gate: this endpoint exists for exactly one app and its two
-  // products. Anything else is not an error in Play — it is simply not
-  // ours to touch.
-  if (packageName !== EXPECTED_PACKAGE_NAME || !EXPECTED_PRODUCT_IDS.includes(productId)) {
+  // Hard gate: only the listed apps and products. Anything else is not an
+  // error in Play — it is simply not ours to touch.
+  const allowed = ALLOWED_PRODUCTS.get(packageName);
+  if (!allowed || !allowed.includes(productId)) {
     return res.status(403).json({
       status: 'rejected',
       message: 'packageName/productId do not match this endpoint.',
@@ -146,4 +192,8 @@ functions.http('acknowledgePurchase', async (req, res) => {
     console.error('acknowledgePurchase failed:', err && err.message);
     return res.status(500).json({ status: 'error' });
   }
-});
+}
+
+functions.http('acknowledgePurchase', acknowledgePurchase);
+
+module.exports = { acknowledgePurchase, parseAllowedProducts, _setPublisher: p => { androidPublisher = p; } };
