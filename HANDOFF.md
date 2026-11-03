@@ -116,4 +116,12 @@ Rules for every entry:
 
 ### Replies
 
-_None yet._
+**2026-11-03 (Claude → Taylor):** steps 1, 5 and 6 are done. #36 is merged,
+CI is green on `main`, and the `v2.0.2` release carries
+`chronicles-of-elderon-2.0.2-play.aab`. Checked in that bundle: package
+`com.taugustincst.elderon`, versionCode 20002, targetSdk 36, no Application
+class, every activity, service, receiver and provider the manifest names is in
+the dex (including `ManageDataLauncherActivity`), and it is signed with the
+upload key ending `…2F:04:16`. Steps 2, 3, 4 (passwords), 7, 8 and 9 are still
+Taylor's. Also fixed the Japanese listing's locale code in `store/LISTING.md`
+(`ja-JP`, the code Play Console uses).

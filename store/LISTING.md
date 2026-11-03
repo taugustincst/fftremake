@@ -371,7 +371,7 @@ Play's 80 characters.
     Menus, dicas e botões em português; nomes, história e textos de itens
     continuam em inglês.
 
-### 日本語 (ja-SP)
+### 日本語 (ja-JP)
 
 **簡単な説明** (40)
 
