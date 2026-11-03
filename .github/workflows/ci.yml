@@ -16,6 +16,9 @@ jobs:
           node-version: 22
       - run: node tools/validate.js
       - run: node tools/regress.js
+      # The store: no chapter is ever locked, and The Hollow Sky opens only
+      # when Play says it is owned.
+      - run: node tools/test-billing.js
 
   browser:
     name: Browser suite
@@ -63,8 +66,8 @@ jobs:
           echo "SDKMANAGER=$SDKMANAGER"
           yes | "$SDKMANAGER" --licenses > /dev/null || true
           "$SDKMANAGER" "platforms;android-36" "build-tools;36.0.0"
-      # Both apps: the sideload shell (app/) and the Play edition (play/),
-      # as debug APKs and as the release bundles Play takes.
+      # The Play edition (play/), as a debug APK and as the release bundle
+      # Play takes. It carries the whole game, so it is rebuilt on every change.
       - name: Build the debug APKs and the release bundles
         working-directory: android
         run: |
@@ -78,28 +81,27 @@ jobs:
           node-version: 22
       - name: Check the APKs would load
         run: |
-          node tools/check-apk.js android/app/build/outputs/apk/debug/app-debug.apk --package com.elderon.tactics
           node tools/check-apk.js android/play/build/outputs/apk/debug/play-debug.apk --package com.taugustincst.elderon
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: debug-apks
           path: |
-            android/app/build/outputs/apk/debug/app-debug.apk
             android/play/build/outputs/apk/debug/play-debug.apk
           if-no-files-found: ignore
 
   launch:
-    # The static check above proves every class the manifest names is in the
-    # dex. This opens the Play edition on an emulator and fails if it crashes,
-    # which catches what a static check cannot (a component the library
-    # touches at launch but the manifest never declares).
+    # The static check above proves every class the manifest names, and every
+    # file the game's page loads, is in the APK. This opens the Play edition
+    # on an emulator and fails unless the game's page loads with no script
+    # errors (the emulator has no Play Store, so the Hollow Sky store answers
+    # "unavailable", as it would offline).
     name: Play edition launch test
     needs: android
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/download-artifact@v4
         with:
           name: debug-apks

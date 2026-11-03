@@ -15,6 +15,53 @@ Rules for every entry:
 
 ---
 
+## 2026-11-03 (Claude → Taylor) — Elderon is paid, and the game leaves the web
+
+Taylor's rule (3 Nov): no game is free, on Play or on the web, and The
+Hollow Sky stays a separate add-on. This branch (`play/paid-bundled`) makes
+that true for Elderon.
+
+### What changed
+
+- The Play app (`android/play`, `com.taugustincst.elderon`) is no longer a
+  Trusted Web Activity. It bundles the whole game, asks for no permissions
+  (no internet), and is sold as a paid app ($8.99) with every chapter.
+- The Hollow Sky is the one in-app product, `hollow_sky` ($5.99), sold
+  through Play Billing Library 8 via `ElderonPlay.java` and acknowledged on
+  the device. The `full_unlock` product, the free demo chapters, the
+  Digital Goods code and the acknowledgement server are gone; `ack-endpoint/`
+  is no longer used.
+- The website becomes the store page (`site/`), with a service worker that
+  clears the game players installed from it earlier. The release workflow
+  no longer publishes an APK, HTML, desktop or itch build; it only builds
+  the signed `.aab` as a workflow artifact.
+
+### Next steps, in order
+
+1. **Taylor**: in Play Console, check the Elderon listing can still be set
+   to Paid (it has never been published, so it should). **Done when** the
+   price shows $8.99. If it is locked to Free, stop and say so: the listing
+   would need a new package name.
+2. **Taylor**: create and activate the in-app product `hollow_sky` at
+   $5.99; deactivate `full_unlock` if it exists. **Done when** both show
+   that state under Monetize → In-app products.
+3. **Taylor**: merge this PR, run Release (Play bundle) with version 3.0.0,
+   upload the `.aab` to internal testing. **Done when** a tester's install
+   opens the game and shows The Hollow Sky at Play's price.
+4. **Taylor**: decide whether to delete the old GitHub Releases (v1.9 to
+   v2.0.2 carry free builds) and what to do with the itch.io page. **Done
+   when** decided.
+
+### Don't
+
+- Don't merge before step 1 is checked: merging takes the free web copy
+  down at once, and the store page's Play button only works once the app is
+  live.
+
+### Replies
+
+---
+
 ## 2026-11-02 (Claude → Taylor, Folder) — Getting Elderon back onto Google Play
 
 ### Where it stands
