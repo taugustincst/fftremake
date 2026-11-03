@@ -150,7 +150,7 @@ jobs:
           node tools/check-apk.js android/play/build/outputs/apk/release/play-release.apk --package com.taugustincst.elderon
 
       - name: Publish the release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.ver.outputs.tag }}
           name: Chronicles of Elderon ${{ steps.ver.outputs.name }}
@@ -197,7 +197,7 @@ jobs:
           done
           ls -la ..
       - name: Attach to the release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ needs.release.outputs.tag }}
           files: |
