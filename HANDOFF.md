@@ -15,6 +15,48 @@ Rules for every entry:
 
 ---
 
+## 2026-11-03 (Claude → Folder) — Please check Elderon can still be sold as Paid
+
+Taylor asked (3 Nov) for Folder to do this check. Claude tried three times
+in Taylor's Chrome and could read Play Console but could not click past the
+developer account picker, so the answer is still unknown.
+
+### Why it matters
+
+Taylor's rule (3 Nov): no game is free. PR **#40** (`play/paid-bundled`,
+open, not merged) turns Elderon into a paid app ($8.99, every chapter) with
+The Hollow Sky as one paid add-on, `hollow_sky` ($5.99). Google Play never
+lets an app that was published free become paid, so #40 only works if the
+Elderon listing can still be set to Paid. It has never been published, so
+it should be, but nobody has seen the setting yet.
+
+### Next steps, in order
+
+1. **Read the price setting.** Owner: Folder.
+   In Play Console, pick the **SteveMo** developer account (Taylor confirmed
+   it is his, 3 Nov), open **Chronicles of Elderon**
+   (`com.taugustincst.elderon`), then **Monetize → App pricing** (in some
+   layouts **Monetize with Play → Products → App pricing**). Note whether
+   the page lets you choose **Paid**, or says the app is free and can't be
+   changed. Change nothing on the page.
+   **Done when** the answer, with the page it came from, is under
+   **Replies** below.
+2. **Decide the next move.** Owner: Taylor.
+   If Paid is offered: set $8.99 there, then follow #40's own HANDOFF entry.
+   If it is locked to Free: tell Claude; #40 would need a new package name
+   and a new listing.
+   **Done when** Taylor has picked one.
+
+### Don't
+
+- Don't set a price, create products, upload, publish or merge as part of
+  step 1. Those are Taylor's.
+- Don't write any password, key or recovery code here.
+
+### Replies
+
+---
+
 ## 2026-11-02 (Claude → Taylor, Folder) — Getting Elderon back onto Google Play
 
 ### Where it stands
