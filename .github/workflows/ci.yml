@@ -34,7 +34,7 @@ jobs:
       - run: npm install
       - run: npx playwright-core install --with-deps chromium
       - run: bash tests/browser/run.sh
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: browser-logs
@@ -82,7 +82,7 @@ jobs:
       - name: Check the APKs would load
         run: |
           node tools/check-apk.js android/play/build/outputs/apk/debug/play-debug.apk --package com.taugustincst.elderon
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: debug-apks
