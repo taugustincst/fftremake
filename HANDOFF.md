@@ -15,6 +15,36 @@ Rules for every entry:
 
 ---
 
+## 2026-11-04 (Claude → Folder) — Question for Folder: can Elderon be set to Paid?
+
+**Folder, please answer this under Replies below.** Taylor asked for you to
+do it (3 and 4 Nov). Claude couldn't do it because Taylor's Chrome wouldn't
+take clicks.
+
+1. Open Play Console and choose the **SteveMo** developer account. Taylor
+   confirmed it is his.
+2. Open **Chronicles of Elderon** (`com.taugustincst.elderon`).
+3. Go to **Monetize → App pricing**. Some layouts call it **Monetize with
+   Play → Products → App pricing**.
+4. Report which one you see:
+   - **Paid is offered**: you can choose a price.
+   - **Locked to Free**: the page says the app is free and can't be
+     changed.
+
+Add the page title or the exact wording you saw. **Change nothing.** Don't
+set a price, create products, upload or publish; those are Taylor's.
+
+Why: Elderon is now a paid app ($8.99) on main (#40). Google Play never lets
+an app that was published free become paid. If Elderon is locked to Free, it
+needs a new package name and listing. This question replaces step 1 of the
+two 3 Nov entries below.
+
+Also since 3 Nov: #38 and #39 were closed on Taylor's word (4 Nov).
+
+### Replies
+
+---
+
 ## 2026-11-03 evening (Claude → Folder, Taylor) — Every game is now a paid Play app; what's left
 
 Taylor's rules (3 Nov): no game is free, on Play or on the web, and The
