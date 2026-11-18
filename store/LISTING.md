@@ -11,83 +11,34 @@ below is maintained by hand. Character limits are Play's.
 
     Chronicles of Elderon
 
-**Short description** (80 max, 78 used)
+**Short description** (80 max, 77 used)
 
-    Tactical RPG: tempo turns, jobs, height and facing. Offline, no ads.
+    Tactical RPG: tempo turns, 35 jobs, height and facing, five endings. Offline.
 
-**Full description** (4000 max)
+**Full description** (4000 max). Play renders `<b>`; paste as is.
 
-    Two princes. One crown. A squire who knows too much.
+    A tactical RPG for your phone: turn-based strategy on height-mapped isometric battlefields, with thirty-five jobs and five endings.
 
-    Chronicles of Elderon is a tactical role-playing game in the tradition of
-    the isometric classics. Lead a small company across five acts and
-    twenty-four chapters of battles on height-mapped fields, from a border
-    war to a haunted winter court to a sea of wrecks to a crown worth five
-    different endings, where you stand and which way you face matter as
-    much as what you swing.
+    Two princes. One crown. A squire who knows too much. Lead a small company across five acts and twenty-four chapters, from a border war to a haunted winter court to a sea of wrecks to a crown worth five different endings.
 
-    CHARGE-TIME TURNS
-    Every unit gains charge each tick and acts at a hundred. Fast units act
-    often; a slow spell may land after the battlefield has moved on. The turn
-    order is always shown, so you can plan around it.
+    <b>Tempo turns.</b> Every unit gains tempo each tick and acts at a hundred. Fast units act often; a slow spell may land after the battlefield has moved on. The turn order is always shown, so you can plan around it.
 
-    HEIGHT AND FACING
-    Every level of high ground adds to a blow, to a quarter more. A strike
-    from the side halves evasion and lands a tenth harder; from behind it
-    cannot be dodged and lands a quarter harder. Climb, jump, and turn the
-    field to see what a wall is hiding.
+    <b>Height and facing.</b> High ground adds to a blow, up to a quarter more. A strike from the side halves evasion and lands a tenth harder; from behind it cannot be dodged and lands a quarter harder. Climb, jump, and turn the field to see what a wall is hiding.
 
-    THE HOLLOW SKY
-    A second campaign, sold as its own in-app purchase: a year after the
-    war the bell rings, and east over the Greywall a Choir is singing the
-    sky down. Sixteen chapters in four acts, three endings, four new
-    trades, five new towns, and a battle against your own reflection.
-    Begin it from the title with a veteran company, or carry a finished
-    game east with everything it has.
+    <b>Thirty-five jobs.</b> Footmen and apothecaries become knights, archers, monks, thieves, clerics, sorcerers, chronomancers, ninja and dragoons; then samurai, summoners, geomancers and bards; then paladins, arcanists, assassins and sages; the Brass Concord's engineers, gunners, aeronauts and artificers; the Winter Court's frostweavers, wardens and runeblades; the Sunder Sea's corsairs, tidecallers and harpooners; and the crown's marshals, inquisitors and duelists, with the Dragonlord, Hierophant and Fell Knight above them all. Earn skill points in battle, learn abilities, equip a second skillset from any job you have studied, and pick your reaction, support and movement passives.
 
-    THIRTY-FIVE JOBS
-    Footmen become knights, archers, monks, thieves, mages, ninja and
-    dragoons; then samurai, summoners, geomancers and bards; then paladins,
-    arcanists, assassins and sages; the Brass Concord's engineers, gunners,
-    aeronauts and artificers; the Winter Court's frostweavers, wardens and
-    runeblades; the Sunder Sea's corsairs, tidecallers and harpooners; and
-    the crown's marshals, inquisitors and duelists — with the legendary
-    Dragonlord, Hierophant and Fell Knight above them all.
-    Earn skill points in battle, learn abilities, equip a second skillset from
-    any job you have studied, and pick your reaction, support and movement
-    passives.
+    <b>Five roads, five endings.</b> At the capital the road forks five ways: take the crown, break it for a council of the cities, run the blockade and sail away, lay down the sword and go home, or seize the throne by force. Every ending is recorded, and the same company can walk every road from the same save.
 
-    FIVE ROADS, FIVE ENDINGS
-    At the capital the company's road forks five ways: take the crown, break
-    it for a council of the cities, run the blockade and sail away, lay down
-    the sword and go home, or seize the throne by force and pay the price
-    for it. Every ending is recorded, and the same company can walk every
-    road from the same save.
+    <b>The Hollow Sky.</b> A second campaign, sold as its own in-app purchase: a year after the war, east over the Greywall, a Choir is singing the sky down. Sixteen chapters in four acts, three endings, four new jobs, five new towns, and a battle against your own reflection. Begin it with a veteran company, or carry a finished game east.
 
-    ELEMENTS THAT MATTER
-    Fire, ice, thunder, earth, water, holy and dark. A bomb drinks fire and
-    bursts in ice; a fell knight feeds on dark and dreads holy. The
-    targeting preview tells you the result before you commit.
-
-    A KINGDOM TO CROSS
-    Ten cities across five acts, each fought open and each stocking its own
-    wares, from Redwater's market stalls to the Chancellor's court in
-    Elderon City.
-
-    EQUIPMENT YOU CAN SEE
-    Buy gear between battles and watch it appear on your characters: the
-    sword in hand, the shield on the arm, the helm, the plume.
-
-    MADE FOR THE PHONE
-    Tap to move and act, drag to pan, pinch to zoom, turn the field with a
-    tap. Play in portrait or landscape. Three difficulty settings, changeable
-    at any time.
-
-    NO STRINGS
-    No ads. No accounts. No subscriptions, no premium currency. You buy
-    the game once and every chapter of the first campaign is yours; The
-    Hollow Sky is the one add-on, sold in the app. The game lives on your
-    device and plays offline; purchases are handled by Google Play.
+    • Seven elements that matter: a bomb drinks fire and bursts in ice, and the targeting preview shows the result before you commit
+    • Ten cities, each won in battle, each with its own wares and a forge that betters gear up to +5
+    • Tame a wild beast in battle and it fights for your company
+    • Gear you buy shows on your characters: the sword in hand, the shield, the helm
+    • Tap to move and act, drag to pan, pinch to zoom; portrait or landscape
+    • Four difficulty settings, changeable at any time
+    • An offline game: no ads, no accounts, no subscriptions, no premium currency
+    • You buy the game once and every chapter of the first campaign is yours; The Hollow Sky is the one add-on, sold in the app
 
 **App category**: Game → Strategy
 **Tags**: Tactical RPG, Turn-based strategy, Single player, Offline
@@ -107,9 +58,9 @@ Play's 80 characters.
 
 ### Deutsch (de-DE)
 
-**Kurzbeschreibung** (78)
+**Kurzbeschreibung** (77)
 
-    Taktik-RPG: Tempo-Züge, Jobs, Höhe und Blickrichtung. Offline, ohne Werbung.
+    Taktik-RPG: Tempo-Züge, 35 Jobs, Höhe und Blickrichtung, fünf Enden. Offline.
 
 **Vollständige Beschreibung**
 
@@ -153,12 +104,12 @@ Play's 80 characters.
 
     SCHMIEDEN UND STÄDTE
     Zehn Städte, jede freigekämpft, jede mit eigenen Waren und eigener
-    Schmiede: verbessere Ausrüstung bis +3, fertige Gewehre und zerlege, was
+    Schmiede: verbessere Ausrüstung bis +5, fertige Gewehre und zerlege, was
     du nicht mehr brauchst.
 
     FÜR DAS TELEFON GEMACHT
     Tippen zum Bewegen und Handeln, ziehen zum Schwenken, kneifen zum Zoomen.
-    Hoch- oder Querformat. Drei Schwierigkeitsgrade, jederzeit änderbar. Ein
+    Hoch- oder Querformat. Vier Schwierigkeitsgrade, jederzeit änderbar. Ein
     Spielstand-Code trägt dein Spiel auf ein anderes Gerät.
 
     KEINE HAKEN
@@ -172,7 +123,7 @@ Play's 80 characters.
 
 ### Français (fr-FR)
 
-**Description courte** (77)
+**Description courte** (73)
 
     RPG tactique : tours au tempo, métiers, hauteur, orientation. Hors ligne.
 
@@ -218,12 +169,12 @@ Play's 80 characters.
 
     FORGES ET VILLES
     Dix villes, chacune libérée par les armes, chacune avec ses marchandises
-    et sa forge : améliorez l’équipement jusqu’à +3, fabriquez des armes à feu
+    et sa forge : améliorez l’équipement jusqu’à +5, fabriquez des armes à feu
     et récupérez ce dont vous n’avez plus besoin.
 
     FAIT POUR LE TÉLÉPHONE
     Touchez pour vous déplacer et agir, glissez pour faire défiler, pincez pour
-    zoomer. Portrait ou paysage. Trois difficultés, modifiables à tout moment.
+    zoomer. Portrait ou paysage. Quatre difficultés, modifiables à tout moment.
     Un code de sauvegarde emporte votre partie sur un autre appareil.
 
     SANS CONDITIONS
@@ -238,7 +189,7 @@ Play's 80 characters.
 
 ### Español (es-ES, es-419)
 
-**Descripción breve** (76)
+**Descripción breve** (75)
 
     RPG táctico: turnos por carga, oficios, altura y orientación. Sin conexión.
 
@@ -284,12 +235,12 @@ Play's 80 characters.
 
     FORJAS Y CIUDADES
     Diez ciudades, cada una liberada en combate, cada una con sus propias
-    mercancías y su forja: mejora el equipo hasta +3, fabrica armas de fuego y
+    mercancías y su forja: mejora el equipo hasta +5, fabrica armas de fuego y
     desguaza lo que ya no necesites.
 
     HECHO PARA EL TELÉFONO
     Toca para moverte y actuar, arrastra para desplazarte, pellizca para
-    acercar. Vertical u horizontal. Tres dificultades, cambiables en cualquier
+    acercar. Vertical u horizontal. Cuatro dificultades, cambiables en cualquier
     momento. Un código de guardado lleva tu partida a otro dispositivo.
 
     SIN CONDICIONES
@@ -304,9 +255,9 @@ Play's 80 characters.
 
 ### Português (pt-BR)
 
-**Descrição breve** (74)
+**Descrição breve** (65)
 
-    RPG tático: turnos por carga, classes, altura e direção. Offline, sem anúncios.
+    RPG tático: turnos por carga, classes, altura e direção. Offline.
 
 **Descrição completa**
 
@@ -350,12 +301,12 @@ Play's 80 characters.
 
     FORJAS E CIDADES
     Dez cidades, cada uma libertada em combate, cada uma com suas mercadorias e
-    sua forja: melhore equipamentos até +3, fabrique armas de fogo e desmonte
+    sua forja: melhore equipamentos até +5, fabrique armas de fogo e desmonte
     o que não precisa mais.
 
     FEITO PARA O CELULAR
     Toque para mover e agir, arraste para rolar, faça pinça para ampliar.
-    Retrato ou paisagem. Três dificuldades, alteráveis a qualquer momento. Um
+    Retrato ou paisagem. Quatro dificuldades, alteráveis a qualquer momento. Um
     código de save leva seu jogo para outro aparelho.
 
     SEM AMARRAS
@@ -369,9 +320,9 @@ Play's 80 characters.
 
 ### 日本語 (ja-SP)
 
-**簡単な説明** (40)
+**簡単な説明** (36)
 
-    タクティカルRPG。テンポ制、ジョブ、高低差と向き。オフライン、広告なし。
+    タクティカルRPG。テンポ制、ジョブ、高低差と向き。オフラインで遊べる。
 
 **詳細な説明**
 
@@ -408,11 +359,11 @@ Play's 80 characters.
 
     鍛冶場と都市
     十の都市を戦って解放し、それぞれの品揃えと鍛冶場を手に入れましょう。装備を
-    +3まで強化し、銃を製作し、不要な物は分解できます。
+    +5まで強化し、銃を製作し、不要な物は分解できます。
 
     スマートフォンのために
     タップで移動と行動、ドラッグでスクロール、ピンチでズーム。縦横どちらでも。
-    難易度は3段階、いつでも変更可。セーブコードで別の端末へ引き継げます。
+    難易度は4段階、いつでも変更可。セーブコードで別の端末へ引き継げます。
 
     しがらみなし
     広告なし。アカウント不要。サブスクリプションもプレミアム通貨もなし。
@@ -429,12 +380,24 @@ Play's 80 characters.
 | App icon | `icon-512.png` | 512×512 PNG, under 1 MB |
 | Feature graphic | `feature-graphic-1024x500.jpg` | 1024×500, JPEG or PNG without alpha |
 | Phone screenshots (2–8) | `phone-1-title.jpg` … `phone-8-jobs.jpg`: the title, a spell landing, a move with its path, an attack forecast, the realm, a forge, the five roads, the job tree | 1200×2400, each side 320–3840 px, long side at most twice the short |
+| Captioned phone screenshots (use these) | `play/play-01.png` … `play-05.png`: the raw shots above under a short caption (see *Captions* below) | 1080×1920 |
 | 7-inch tablet (up to 8) | `tablet-1-battle.jpg`, `tablet-2-realm.jpg` | 2560×1600 |
 | 10-inch tablet (up to 8) | the same two files | 2560×1600 |
 | Promo video (optional) | `trailer.webm` from `node tools/make-video.js`, uploaded to YouTube; the console takes the link | 30 s, 1280×720; no sound, since a headless browser records none. Not kept in the repository. |
 
 The tablet screenshots are optional unless you want the app promoted on
 tablets; the same two files satisfy both slots.
+
+### Captions
+
+Made with the marketing caption tool from the raw shots in this folder;
+nothing is painted over the gameplay.
+
+1. `phone-4-attack.jpg`: **Know the odds first** / Hit chance and damage on every target
+2. `phone-3-move.jpg`: **Tempo sets every turn** / Turn order always shown along the top
+3. `phone-8-jobs.jpg`: **Thirty-five jobs** / Grow each unit through its own job tree
+4. `phone-7-roads.jpg`: **Five roads, five endings** / Your choices decide how the war ends
+5. `phone-5-realm.jpg`: **A war in 24 chapters** / Talk around the fire the night before
 
 ## App content (policy declarations)
 

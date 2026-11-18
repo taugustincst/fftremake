@@ -1,36 +1,41 @@
 # itch.io page — Chronicles of Elderon
 
-The free web release. itch.io hosts the game in its own frame, takes a zip
-with `index.html` at its root, and asks for the settings below. The zip is
-built by `node tools/itch.js` (and attached to every GitHub release as
-`chronicles-of-elderon-<version>-itch.zip`); the copy is maintained here.
+itch.io hosts a game in its own frame, takes a zip with `index.html` at its
+root, and asks for the settings below. The zip is built by
+`node tools/itch.js` (it writes `dist/chronicles-of-elderon-itch.zip`); the
+release workflow no longer builds it. The copy is maintained here.
 
-## Why itch first
+## On hold: do not upload until Taylor decides
 
-The browser build is finished and costs nothing to host. itch.io gives it a
-page with analytics (plays, downloads, where people came from), comments and
-ratings from the people who actually play tactics games, and a way to take
-donations without putting a price in front of a first-time player. Everything
-learned there (where players stop, what they ask for, what they praise)
-feeds the Steam page, where the same game sells for money.
+Taylor's rule of 3 November (see HANDOFF.md): no game is free, on Play or on
+the web, and The Hollow Sky stays a separate add-on. Elderon is now a paid
+app on Google Play ($8.99) with The Hollow Sky as a $5.99 in-app purchase.
+
+Outside the Play app the web build opens everything: the whole campaign and
+The Hollow Sky, with no demo limit. So the zip `node tools/itch.js` makes is
+the full paid game and its add-on, free. Uploading it as it stands would
+break that rule. What to do with the itch.io page is an open decision of
+Taylor's (HANDOFF.md, step 4 of the 3 November entry). A free demo here
+would need a demo limit in the web build first, which is an app change.
+
+The page copy below is kept current so it is ready if Taylor decides to use
+it.
 
 ## Upload
 
-1. https://itch.io/game/new (a free account; verify the email first).
-2. **Kind of project:** HTML. Upload `chronicles-of-elderon-<version>-itch.zip`
+1. https://itch.io/game/new (Taylor's own account).
+2. **Kind of project:** HTML. Upload `chronicles-of-elderon-itch.zip`
    and tick **This file will be played in the browser**.
 3. **Embed options:** *Click to launch in fullscreen*; viewport **1280 × 800**;
    tick **Mobile friendly**, **Automatically start on page load**, and
    **Fullscreen button**. Orientation: *Default*. SharedArrayBuffer: off (not
    used).
-4. **Pricing:** *No payments* at first, or *$0 or donate* with a suggested
-   $4. Never *Paid* here while the Steam page is the paid one.
+4. **Pricing:** *No payments* (only once the hold above is lifted; nothing
+   on itch is for sale).
 5. **Visibility:** *Draft* until the page below is filled, then *Public*.
 
-Later uploads: `butler push dist/chronicles-of-elderon-itch.zip <user>/chronicles-of-elderon:html5 --userversion <version>`
-from the release workflow, once the `BUTLER_API_KEY` secret and the
-`ITCH_TARGET` variable (`<user>/chronicles-of-elderon`) are set in the
-repository; until then, upload the zip by hand.
+Later uploads: by hand, with a fresh `node tools/itch.js`. The release
+workflow no longer pushes to itch.
 
 ## Page
 
@@ -57,8 +62,8 @@ Spanish, Portuguese (Brazil), Japanese (the shell; the story is in English)
 **Accessibility:** Configurable controls (no), subtitles (n/a), high-contrast
 (no), interactive tutorial (yes), one-button (no). Reduced motion honoured.
 
-**Links:** source and releases at https://github.com/taugustincst/fftremake ·
-play online at https://taugustincst.github.io/fftremake/
+**Links:** on Google Play at
+https://play.google.com/store/apps/details?id=com.taugustincst.elderon
 
 **Description** (itch takes Markdown)
 
@@ -84,7 +89,7 @@ play online at https://taugustincst.github.io/fftremake/
     geomancers and bards; the Brass Concord's engineers and gunners; the
     Winter Court's frostweavers; the Sunder Sea's corsairs; the crown's
     marshals, inquisitors and duelists. Earn skill points, learn abilities,
-    equip a second skillset, and pick your passives. 281 skills in all.
+    equip a second skillset, and pick your passives. 319 abilities in all.
 
     **Beasts.** Tame a wild creature below half its health and it fights for
     you, with its own skills and a name of its own.
@@ -92,14 +97,17 @@ play online at https://taugustincst.github.io/fftremake/
     **Five roads, five endings.** At the capital the road forks five ways,
     and the same company can walk every road from the same save.
 
-    **Ten cities, each with a forge,** that betters gear to +3, makes arms sold
+    **Ten cities, each with a forge,** that betters gear to +5, makes arms sold
     nowhere else, and breaks spare gear down for materials.
 
     **No strings.** No ads, no accounts, no purchases, nothing downloaded after
     the page. Save codes carry a game between devices. Works on a phone.
 
     The whole game is drawn and sounded in code at run time: every sprite,
-    every tile, every note of the score. It is open source.
+    every tile, every note of the score.
+
+    Also on Google Play:
+    https://play.google.com/store/apps/details?id=com.taugustincst.elderon
 
 **Screenshots:** `phone-2-spell.jpg`, `phone-4-attack.jpg`, `tablet-1-battle.jpg`,
 `tablet-2-realm.jpg`, `phone-7-roads.jpg` from this folder, and the trailer
@@ -110,6 +118,7 @@ poorly; use `steam-main-1232x706.jpg`, which itch scales down.
 
 ## Release post
 
-Publish a short devlog with the first public version: what the game is, that
-it is free and finished, and that the Steam version is coming. itch surfaces
-projects with a devlog in its *Recent* feeds; a bare page is not shown.
+Only once the hold above is lifted: a short devlog with the first public
+version, saying what the game is and that it is on Google Play. itch
+surfaces projects with a devlog in its *Recent* feeds; a bare page is not
+shown.
