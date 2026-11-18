@@ -21,7 +21,7 @@ const read = (p) => fs.readFileSync(path.join(ROOT, p), 'utf8');
 const dataUri = (p) =>
   'data:image/png;base64,' + fs.readFileSync(path.join(ROOT, p)).toString('base64');
 
-const SCRIPTS = ['i18n', 'audio', 'data', 'data2', 'maps', 'maps2', 'story', 'story2', 'color', 'icons', 'sprites', 'unit', 'map', 'battle', 'fx', 'render', 'ui', 'game', 'billing'];
+const SCRIPTS = ['i18n', 'audio', 'data', 'data2', 'maps', 'maps2', 'story', 'story2', 'color', 'icons', 'sprites', 'unit', 'map', 'battle', 'fx', 'render', 'more', 'ui', 'game', 'billing'];
 
 let html = read('index.html');
 
@@ -37,6 +37,12 @@ body = body.replace(/<script src="js\/[^"]+"><\/script>\s*/g, '');
 body = body.replace(/<script>([\s\S]*?)<\/script>\s*/g, (m, inner) => (inner.includes('serviceWorker') ? '' : m));
 
 const css = read('css/style.css');
+
+// The More games list shows an icon per title. The page takes them from
+// icons/more/; the bundle has no beside, so they travel as data URIs that
+// the list prefers when it finds them.
+const moreIcons = fs.readdirSync(path.join(ROOT, 'icons/more')).filter(f => f.endsWith('.png')).sort()
+  .reduce((o, f) => { o[f.replace(/\.png$/, '')] = dataUri('icons/more/' + f); return o; }, {});
 const code = SCRIPTS.map(name => {
   const src = read(`js/${name}.js`);
   return `/* ===== js/${name}.js ===== */\n${src}`;
@@ -115,7 +121,7 @@ const head = `${headMeta}<meta name="theme-color" content="#0f1020">
 ${css}
 </style>`;
 
-const scripts = `<script>\n${viewportFix}${installer}\n</script>\n<script>\n${code}\n</script>`;
+const scripts = `<script>\n${viewportFix}${installer}\nwindow.MORE_ICONS = ${JSON.stringify(moreIcons)};\n</script>\n<script>\n${code}\n</script>`;
 const page = bodyOnly
   ? `${head}\n${body}\n${scripts}\n`
   : `<!DOCTYPE html>\n<html lang="en">\n<head>\n${head}\n</head>\n<body>\n${body}\n${scripts}\n</body>\n</html>\n`;

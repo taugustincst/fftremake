@@ -30,10 +30,21 @@
       <button id="btn-load" data-i18n>Load Game</button>
     </div>
     <button id="btn-new-hollow" class="title-expansion"><span class="title-expansion-name">The Hollow Sky</span><small data-i18n>Expansion · a veteran company, east over the Greywall</small></button>
-    <button id="btn-credits" class="link title-credits" data-i18n>Credits</button>
+    <div class="title-links"><button id="btn-credits" class="link title-credits" data-i18n>Credits</button><button id="btn-more" class="link title-credits" data-i18n hidden>More games</button></div>
     <small id="title-version" class="title-version"></small>
     <select id="title-lang" class="title-lang" aria-label="Language" data-i18n-aria="Language"></select>
     <div class="title-foot" data-i18n="Isometric tactics · Tempo turns · Jobs & abilities · Height and facing matter">Isometric tactics · Tempo turns · Jobs &amp; abilities · Height and facing matter</div>
+  </div>
+</section>
+
+<!-- ================= More from AugustInnovations ================= -->
+<!-- Reached from the title screen only, never from a battle, the camp or a chapter's end. -->
+<section id="screen-more" class="screen">
+  <div class="credits-box more-box">
+    <h2 data-i18n>More from AugustInnovations</h2>
+    <p class="more-lede" data-i18n>Our other games. Tap one to see it on Google Play.</p>
+    <ul id="more-list" class="more-list"></ul>
+    <button id="btn-more-back" data-i18n>Back</button>
   </div>
 </section>
 
@@ -371,6 +382,7 @@
 <script src="js/battle.js"></script>
 <script src="js/fx.js"></script>
 <script src="js/render.js"></script>
+<script src="js/more.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/game.js"></script>
 <script src="js/billing.js"></script>
