@@ -14,7 +14,7 @@ const TIPS_KEY = 'elderon.tips';
 // a chat message, an email or a paste into a notes app.
 const CODE_TAG = 'ELDERON1.';
 // Shown in the credits; tools/regress.js keeps it equal to package.json's.
-const GAME_VERSION = '2.0.1';
+const GAME_VERSION = '2.0.2';
 // Where each chapter sits on the map of the realm, as fractions of the canvas.
 // Twelve stops: Act I runs east along the lower road, Act II turns back west
 // along the coast above it, so the two never cross on the parchment.
@@ -279,8 +279,34 @@ class Game {
     langSel.value = LANG;
     langSel.onchange = () => this.changeLanguage(langSel.value);
     $('btn-credits-back').onclick = () => this.showScreen('title');
+    // More from AugustInnovations: the studio's other games, each a link to its Play
+    // listing. Offered on the title only, never in a battle, at camp or at a chapter's end.
+    // The rows are built from js/more.js the first time the screen opens.
+    $('btn-more').hidden = !(window.MoreGames && MoreGames.listFor('elderon').length);
+    $('btn-more').onclick = () => { this.renderMoreGames(); this.showScreen('more'); };
+    $('btn-more-back').onclick = () => this.showScreen('title');
     // Which build is running, where anyone reporting a problem will see it.
     $('title-version').textContent = `v${GAME_VERSION}`;
+  }
+
+  // The More games list: one row per other live title, nearest genre first. The bundled
+  // single file carries the icons as data URIs (window.MORE_ICONS); the page and the
+  // app take them from icons/more/. Nothing is fetched beyond those icons.
+  renderMoreGames() {
+    const M = window.MoreGames, el = $('more-list');
+    if (!M || !el || el.querySelector('li')) return;
+    const icons = window.MORE_ICONS || {};
+    for (const t of M.listFor('elderon')) {
+      const li = document.createElement('li'), a = document.createElement('a'), im = document.createElement('img');
+      const tx = document.createElement('span'), b = document.createElement('b'), hk = document.createElement('span'), st = document.createElement('span');
+      a.className = 'more-row'; a.href = M.url(t); a.target = '_blank'; a.rel = 'noopener'; a.dataset.app = t.id;
+      im.className = 'more-icon'; im.alt = ''; im.width = 48; im.height = 48; im.decoding = 'async';
+      im.onerror = () => { im.style.visibility = 'hidden'; };
+      im.src = icons[t.id] || M.icon(t);
+      tx.className = 'more-text'; b.className = 'more-title'; b.textContent = t.title;
+      hk.className = 'more-hook'; hk.textContent = t.hook; st.className = 'more-store'; st.textContent = 'Google Play';
+      tx.append(b, hk, st); a.append(im, tx); li.append(a); el.append(li);
+    }
   }
 
   // Effects and music levels, in the battle's help panel and at camp. Each

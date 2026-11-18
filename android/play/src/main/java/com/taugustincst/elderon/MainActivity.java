@@ -1,7 +1,9 @@
 package com.taugustincst.elderon;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.content.pm.ApplicationInfo;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -132,8 +134,17 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                // The game never navigates away; refuse anything that tries.
-                return !DOMAIN.equals(request.getUrl().getHost());
+                Uri url = request.getUrl();
+                if (DOMAIN.equals(url.getHost())) return false;   // the game's own pages, privacy.html included
+                // Anything else (a More games link to a Play listing, the source on
+                // GitHub) goes to the phone's own apps; the game itself never leaves
+                // its assets and never loads an outside page.
+                try {
+                    startActivity(new Intent(Intent.ACTION_VIEW, url));
+                } catch (RuntimeException e) {
+                    Log.w("ELDERON", "no app opens " + url);
+                }
+                return true;
             }
 
             @Override

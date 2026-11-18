@@ -8,7 +8,7 @@
    old cache is deleted only when the new one is complete, so a player never
    runs half of one build and half of another. The page is told when a new
    build is waiting and asks before switching to it. */
-const VERSION = '4b85f8a17f';
+const VERSION = 'e14f914cc1';
 const CACHE = 'elderon-' + VERSION;
 
 const ASSETS = [
@@ -32,6 +32,7 @@ const ASSETS = [
   'js/battle.js',
   'js/fx.js',
   'js/render.js',
+  'js/more.js',
   'js/ui.js',
   'js/game.js',
   'js/billing.js',
@@ -39,6 +40,20 @@ const ASSETS = [
   'icons/icon-192.png',
   'icons/icon-512.png',
   'icons/icon-maskable-512.png',
+  'icons/more/apothecary.png',
+  'icons/more/blackpool.png',
+  'icons/more/cartographer.png',
+  'icons/more/clockworkpost.png',
+  'icons/more/harbormaster.png',
+  'icons/more/ironhold.png',
+  'icons/more/keepthelight.png',
+  'icons/more/lostproperty.png',
+  'icons/more/mended.png',
+  'icons/more/nightbakery.png',
+  'icons/more/nighttrain.png',
+  'icons/more/openstall.png',
+  'icons/more/pocketdecks.png',
+  'icons/more/seedandsprout.png',
 ];
 
 // The whole build, or nothing: one file failing fails the install, and the
